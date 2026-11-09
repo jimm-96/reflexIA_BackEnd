@@ -102,3 +102,49 @@ class Taller(models.Model):
 
     def __str__(self):
         return f'Taller {self.numero}: {self.titulo}'
+
+
+class PreguntaTeorica(models.Model):
+    """
+    Pregunta del cuestionario del marco teórico (HU-04).
+
+    Equivale a `QuizQuestion` del frontend (src/models/theoryQuiz.ts).
+    Sus alternativas están en el modelo `Alternativa`.
+    """
+
+    enunciado = models.TextField()
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'pregunta teórica'
+        verbose_name_plural = 'preguntas teóricas'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.enunciado
+
+
+class Alternativa(models.Model):
+    """
+    Opción de respuesta de una pregunta teórica (HU-04).
+
+    Equivale a `QuizOption` del frontend. En el frontend la respuesta
+    correcta se marca en la pregunta (`correctOptionId`); aquí cada
+    alternativa indica si es correcta.
+    """
+
+    pregunta = models.ForeignKey(
+        PreguntaTeorica,
+        on_delete=models.CASCADE,
+        related_name='alternativas',
+    )
+    texto = models.CharField(max_length=300)
+    es_correcta = models.BooleanField('es correcta', default=False)
+
+    class Meta:
+        verbose_name = 'alternativa'
+        verbose_name_plural = 'alternativas'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.texto

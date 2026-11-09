@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Taller, UsuarioAutorizado
+from .models import Alternativa, PreguntaTeorica, Taller, UsuarioAutorizado
 
 
 @admin.register(UsuarioAutorizado)
@@ -15,3 +15,16 @@ class UsuarioAutorizadoAdmin(admin.ModelAdmin):
 class TallerAdmin(admin.ModelAdmin):
     list_display = ('numero', 'titulo', 'fecha_limite', 'intentos_maximos')
     search_fields = ('titulo',)
+
+
+class AlternativaInline(admin.TabularInline):
+    model = Alternativa
+    extra = 4
+
+
+@admin.register(PreguntaTeorica)
+class PreguntaTeoricaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'enunciado', 'activa')
+    list_filter = ('activa',)
+    search_fields = ('enunciado',)
+    inlines = [AlternativaInline]
