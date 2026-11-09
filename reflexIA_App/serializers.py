@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import UsuarioAutorizado, validar_correo_institucional
+from .models import Taller, UsuarioAutorizado, validar_correo_institucional
 
 
 class UsuarioAutorizadoSerializer(serializers.ModelSerializer):
@@ -22,3 +22,9 @@ class UsuarioAutorizadoSerializer(serializers.ModelSerializer):
         model = UsuarioAutorizado
         fields = '__all__'
         read_only_fields = ('fecha_registro',)
+
+
+class TallerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Taller
+        fields = '__all__'
