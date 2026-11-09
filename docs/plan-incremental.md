@@ -31,7 +31,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 0 | `main` (directo) |
 | 1 | `recurso-usuarios` (PR #1, integrado) |
 | 2 | `recurso-talleres` (PR #2, integrado) |
-| 3 | `recurso-preguntas` |
+| 3 | `recurso-preguntas` (PR #3, integrado) |
 | 4 | `recurso-intentos-cuestionario` |
 | 5 | `recurso-reflexiones` |
 | 6 | `recurso-retroalimentaciones` |
@@ -178,6 +178,50 @@ Cómo probarla:
 3. En `/api/preguntas/`: comprobar que la pregunta aparece con sus alternativas anidadas, crear otra (POST), y comprobar que un enunciado vacío se rechaza.
 4. En `/api/preguntas/<id>/`: desactivarla (PATCH con `"activa": false`) y eliminarla (DELETE). Al eliminar una pregunta también se eliminan sus alternativas.
 
+## Etapa 4: intentos de cuestionario (HU-04) ✅
+
+Rama: `recurso-intentos-cuestionario`.
+
+Modelo `IntentoCuestionario`: cada vez que un estudiante rinde el cuestionario del marco teórico, con su resultado. Equivale a `QuizAttempt` del frontend (`src/models/theoryQuiz.ts`).
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `estudiante` | `ForeignKey` a `UsuarioAutorizado` | Solo usuarios con rol `student` (`limit_choices_to`). `on_delete=CASCADE`: al eliminar al estudiante se eliminan sus intentos (RN-03). `related_name='intentos_cuestionario'`. |
+| `respuestas_correctas` | `PositiveSmallIntegerField` | De 0 a 10: cada intento tiene 10 preguntas (RF-04). |
+| `nota` | `DecimalField` | De 1.0 a 7.0, con un decimal (`max_digits=2`, `decimal_places=1`). |
+| `aprobado` | `BooleanField` | Por defecto `False`. |
+| `fecha` | `DateTimeField` | Se llena sola al crear; solo lectura. |
+
+Decisiones:
+
+- Solo los estudiantes pueden tener intentos (`limit_choices_to={'rol': 'student'}`). Se adelantó a esta etapa porque es parte del modelo, igual que el dominio `@ucen.cl` en la etapa 1: el admin solo ofrece estudiantes y la API rechaza a un profesor.
+- La nota es `DecimalField` y no `FloatField`, para que `6.6` se guarde exacto. La API la entrega como número (`6.6`) y no como texto (`"6.6"`), igual que la usa el frontend (`coerce_to_string=False`).
+- Los límites (10 preguntas, notas de 1.0 a 7.0) son constantes de la clase (`PREGUNTAS_POR_INTENTO`, `NOTA_MINIMA`, `NOTA_MAXIMA`).
+- El estudiante se envía por su id; la respuesta agrega `correo_estudiante` (solo lectura) para leer quién rindió sin buscar el id.
+- El ViewSet y el admin usan `select_related('estudiante')`, que trae el estudiante de cada intento en la misma consulta.
+- No se agregó un campo con el número de intento: se obtiene contando los intentos del estudiante, y así no hay dos datos que puedan contradecirse.
+
+Pendientes para el ajuste final:
+
+- La nota y `aprobado` los envía quien registra el intento. Las reglas (aprobar con 8 de 10, máximo 9 intentos en bloques con nota máxima 7.0, 5.0 y 4.0, DEC-15) se aplican en la etapa 11.
+- No hay filtro por estudiante (`?estudiante=<id>`): la lista trae los intentos de todos.
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0004_intentocuestionario.py` | `feat: agrega modelo IntentoCuestionario` |
+| 2 | `reflexIA_App/admin.py` | `feat: registra IntentoCuestionario en el admin` |
+| 3 | `reflexIA_App/serializers.py` | `feat: agrega IntentoCuestionarioSerializer` |
+| 4 | `reflexIA_App/views.py` | `feat: agrega IntentoCuestionarioViewSet` |
+| 5 | `reflexIA_App/urls.py` | `feat: expone /api/intentos-cuestionario/ en el router` |
+| 6 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 4 (intentos de cuestionario)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate`.
+2. En `/admin/` → **Usuarios autorizados**: tener al menos un estudiante y un profesor.
+3. En `/admin/` → **Intentos de cuestionario**: comprobar que la lista de estudiantes no incluye al profesor, crear un intento (por ejemplo, 9 correctas y nota 6.6) y comprobar que se rechazan 11 correctas y la nota 8.
+4. En `/api/intentos-cuestionario/`: listar, crear (POST) y comprobar que el id de un profesor se rechaza. En `/api/intentos-cuestionario/<id>/`: editar (PATCH) y eliminar (DELETE).
+
 ## Recursos previstos
 
 Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombres y campos son una propuesta; se confirman al empezar cada etapa.
@@ -187,7 +231,7 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 | 1 ✅ | `UsuarioAutorizado` | HU-01 Whitelist | `correo` (`@ucen.cl`, único), `nombre`, `rol`, `estado`, `fecha_registro`, `fecha_revocacion` | `/api/usuarios/` |
 | 2 ✅ | `Taller` | HU-03, HU-06, HU-09 | `numero`, `titulo`, `objetivo`, `actividad`, `producto`, `fecha_limite`, `intentos_maximos` (3 por defecto) | `/api/talleres/` |
 | 3 ✅ | `PreguntaTeorica` y `Alternativa` | HU-04 Marco teórico | Pregunta: `enunciado`, `activa`. Alternativa: `pregunta` (FK), `texto`, `es_correcta` | `/api/preguntas/` |
-| 4 | `IntentoCuestionario` | HU-04 | `estudiante` (FK), `respuestas_correctas`, `nota`, `aprobado`, `fecha` | `/api/intentos-cuestionario/` |
+| 4 ✅ | `IntentoCuestionario` | HU-04 | `estudiante` (FK), `respuestas_correctas`, `nota`, `aprobado`, `fecha` | `/api/intentos-cuestionario/` |
 | 5 | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados` | `/api/reflexiones/` |
 | 6 | `Retroalimentacion` | HU-02 El Impulso | `reflexion` (FK), `propuesta_ia`, `comentario_docente`, `estado` (pendiente, editada, validada) | `/api/retroalimentaciones/` |
 | 7 | `Evaluacion` | HU-02, panel docente | `estudiante` (FK), `taller` (FK), `nota` (1,0 a 7,0), `resultado` (aprobado, reprobado), `fecha` | `/api/evaluaciones/` |
