@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 1 de 8, usuarios autorizados (whitelist). Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 2 de 8, talleres. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -117,6 +117,33 @@ Whitelist de correos que pueden ingresar a ReflexIA (HU-01).
 * **Valores permitidos:** `rol` = `student`, `teacher` o `admin`; `estado` = `active` o `revoked`.
 * **Validaciones:** el correo debe terminar en `@ucen.cl` y no puede repetirse (sin importar mayúsculas). Si no se cumple, la API responde `400 Bad Request` con el motivo.
 
+### 2. Recurso: Talleres (`/api/talleres/`)
+
+Los cuatro talleres de la práctica, con su plazo y su límite de intentos (HU-03, HU-06, HU-09).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/talleres/` | Lista los talleres, ordenados por número |
+| POST | `/api/talleres/` | Crea un taller |
+| GET | `/api/talleres/<id>/` | Muestra un taller |
+| PUT / PATCH | `/api/talleres/<id>/` | Modifica un taller (por ejemplo, su plazo o sus intentos) |
+| DELETE | `/api/talleres/<id>/` | Elimina un taller |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "numero": 1,
+    "titulo": "Identificación del incidente",
+    "objetivo": "Reconocer un incidente crítico ocurrido en el aula.",
+    "actividad": "Describir el contexto, el hecho, los actores y su relevancia.",
+    "producto": "Relato del incidente crítico.",
+    "fecha_limite": "2026-12-04",
+    "intentos_maximos": 3
+  }
+  ```
+* **Opcionales:** `fecha_limite` (por defecto sin plazo) e `intentos_maximos` (por defecto 3).
+* **Validaciones:** `numero` es único y va de 1 a 4; `intentos_maximos` va de 1 a 3; `fecha_limite` debe ser una fecha real en formato `AAAA-MM-DD`. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+
 ---
 
 ## Flujo de trabajo incremental
@@ -126,9 +153,9 @@ La configuración inicial (etapa 0) está en `main`. Cada etapa siguiente se des
 ```bash
 git switch main
 git pull
-git switch -c feature/recurso-<nombre>     # por ejemplo, feature/recurso-usuarios
+git switch -c recurso-<nombre>     # por ejemplo, recurso-talleres
 # ... commits de la etapa ...
-git push -u origin feature/recurso-<nombre>
+git push -u origin recurso-<nombre>
 ```
 
 Dentro de cada rama, el recurso se agrega en commits pequeños, con este orden:

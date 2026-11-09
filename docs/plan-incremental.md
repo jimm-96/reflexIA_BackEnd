@@ -19,25 +19,25 @@ Solo la etapa 0 (configuración inicial) se hizo directamente en `main`. Desde l
 ```bash
 git switch main
 git pull
-git switch -c feature/recurso-<nombre>
+git switch -c recurso-<nombre>
 # ... commits de la etapa ...
-git push -u origin feature/recurso-<nombre>
+git push -u origin recurso-<nombre>
 ```
 
-Luego se abre el Pull Request hacia `main` en GitHub. Después del merge se vuelve a `main` con `git switch main` y `git pull`, y recién ahí se crea la rama de la etapa siguiente. Así cada etapa parte con la anterior ya integrada.
+Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pull request**. Abrir el PR no basta: sus commits llegan a `main` solo después del merge. Recién entonces se vuelve a `main` con `git switch main` y `git pull`, y se crea la rama de la etapa siguiente. Así cada etapa parte con la anterior ya integrada y las migraciones quedan en orden (`0001`, `0002`, …).
 
 | Etapa | Rama |
 |---|---|
 | 0 | `main` (directo) |
-| 1 | `feature/recurso-usuarios` |
-| 2 | `feature/recurso-talleres` |
-| 3 | `feature/recurso-preguntas` |
-| 4 | `feature/recurso-intentos-cuestionario` |
-| 5 | `feature/recurso-reflexiones` |
-| 6 | `feature/recurso-retroalimentaciones` |
-| 7 | `feature/recurso-evaluaciones` |
-| 8 | `feature/recurso-innovaciones` |
-| 9 | `feature/config-mysql` |
+| 1 | `recurso-usuarios` (PR #1, integrado) |
+| 2 | `recurso-talleres` |
+| 3 | `recurso-preguntas` |
+| 4 | `recurso-intentos-cuestionario` |
+| 5 | `recurso-reflexiones` |
+| 6 | `recurso-retroalimentaciones` |
+| 7 | `recurso-evaluaciones` |
+| 8 | `recurso-innovaciones` |
+| 9 | `config-mysql` |
 
 ## Etapa 0: estructura inicial ✅
 
@@ -51,7 +51,7 @@ Entorno virtual, proyecto `reflexIA_Proyect`, aplicación `reflexIA_App`, config
 
 ## Etapa 1: usuarios autorizados (HU-01) ✅
 
-Rama: `feature/recurso-usuarios`.
+Rama: `recurso-usuarios`.
 
 Modelo `UsuarioAutorizado`: la whitelist de correos que pueden ingresar a ReflexIA. Equivale a `WhitelistEntry` del frontend (`src/models/whitelist.ts`).
 
@@ -85,6 +85,49 @@ Cómo probarla:
 2. En `/admin/` → **Usuarios autorizados**: crear un correo `@ucen.cl` y comprobar que uno `@gmail.com` se rechaza.
 3. En `/api/usuarios/`: listar, crear (POST), y en `/api/usuarios/<id>/` editar (PUT/PATCH) y eliminar (DELETE).
 
+## Etapa 2: talleres (HU-03, HU-06, HU-09) ✅
+
+Rama: `recurso-talleres`.
+
+Modelo `Taller`: la definición de cada uno de los cuatro talleres, con su plazo y sus intentos. Equivale a `Workshop` del frontend (`src/models/criticalIncident.ts`) más la configuración de plazos e intentos de `src/models/workPacing.ts`.
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `numero` | `PositiveSmallIntegerField` | Único, de 1 a 4 (RF-03: son cuatro talleres). Define el orden. |
+| `titulo` | `CharField` | Título oficial del taller. |
+| `objetivo` | `TextField` | Bloque "Objetivo" (RF-03). |
+| `actividad` | `TextField` | Bloque "Actividad" (RF-03). |
+| `producto` | `TextField` | Bloque "Producto" (RF-03). |
+| `fecha_limite` | `DateField` | Opcional. Plazo que fija el profesor guía (DEC-13). Formato `AAAA-MM-DD`. |
+| `intentos_maximos` | `PositiveSmallIntegerField` | De 1 a 3; por defecto 3 (DEC-11). |
+
+Decisiones:
+
+- `Taller` guarda solo la **definición** del taller, que es la misma para todos los estudiantes. El estado de cada estudiante (bloqueado, en curso, completado), sus intentos usados y su nota van en `Reflexion` y `Evaluacion` (etapas 5 y 7), que apuntarán a `Taller` con una llave foránea.
+- No se agregó un campo `codigo` (`workshop-1`, …): se deduce de `numero`, y así no hay dos datos que puedan contradecirse.
+- Los límites (4 talleres, 1 a 3 intentos) son constantes de la clase (`NUMERO_MAXIMO`, `INTENTOS_MAXIMOS_PERMITIDOS`), para cambiarlos en un solo lugar si el equipo los modifica.
+- Los campos con tilde tienen etiqueta en español (`'número'`, `'título'`, `'fecha límite'`, `'intentos máximos'`) para que el admin y los mensajes de error se lean bien.
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0002_taller.py` | `feat: agrega modelo Taller con plazo e intentos máximos` |
+| 2 | `reflexIA_App/admin.py` | `feat: registra Taller en el admin` |
+| 3 | `reflexIA_App/serializers.py` | `feat: agrega TallerSerializer` |
+| 4 | `reflexIA_App/views.py` | `feat: agrega TallerViewSet` |
+| 5 | `reflexIA_App/urls.py` | `feat: expone /api/talleres/ en el router` |
+| 6 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 2 (talleres)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate`.
+2. En `/admin/` → **Talleres**: cargar los cuatro talleres. Títulos oficiales (RF-03):
+   1. Identificación del incidente
+   2. Del aula a la transformación profesional
+   3. Confrontación teórica
+   4. Transformación e innovación
+3. Comprobar que se rechazan un número repetido, el número 5 y 4 intentos.
+4. En `/api/talleres/`: listar, crear, y en `/api/talleres/<id>/` editar el plazo o los intentos (PATCH) y eliminar.
+
 ## Recursos previstos
 
 Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombres y campos son una propuesta; se confirman al empezar cada etapa.
@@ -92,7 +135,7 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 | Etapa | Modelo | HU | Campos principales | Ruta |
 |---|---|---|---|---|
 | 1 ✅ | `UsuarioAutorizado` | HU-01 Whitelist | `correo` (`@ucen.cl`, único), `nombre`, `rol`, `estado`, `fecha_registro`, `fecha_revocacion` | `/api/usuarios/` |
-| 2 | `Taller` | HU-03, HU-06, HU-09 | `numero`, `titulo`, `objetivo`, `actividad`, `producto`, `fecha_limite`, `intentos_maximos` (3 por defecto) | `/api/talleres/` |
+| 2 ✅ | `Taller` | HU-03, HU-06, HU-09 | `numero`, `titulo`, `objetivo`, `actividad`, `producto`, `fecha_limite`, `intentos_maximos` (3 por defecto) | `/api/talleres/` |
 | 3 | `PreguntaTeorica` y `Alternativa` | HU-04 Marco teórico | Pregunta: `enunciado`, `activa`. Alternativa: `pregunta` (FK), `texto`, `es_correcta` | `/api/preguntas/` |
 | 4 | `IntentoCuestionario` | HU-04 | `estudiante` (FK), `respuestas_correctas`, `nota`, `aprobado`, `fecha` | `/api/intentos-cuestionario/` |
 | 5 | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados` | `/api/reflexiones/` |
@@ -108,4 +151,4 @@ El orden importa: los modelos con llaves foráneas (FK) van después de los mode
 |---|---|
 | 9 | Cambio de SQLite a **MySQL** (`mysqlclient`, credenciales en `.env`). |
 | 10 | Preparación para integrar con el frontend React: CORS (`django-cors-headers`) y autenticación. |
-| 11 | Reglas de negocio en el servidor: aprobación 8/10 del cuestionario, 3 intentos por taller, nota 7,0 para avanzar. (El dominio `@ucen.cl` ya se valida desde la etapa 1.) |
+| 11 | Reglas de negocio en el servidor: aprobación 8/10 del cuestionario, nota 7,0 para avanzar, cierre automático del taller al vencer su plazo (DEC-13, GAP-05). (El dominio `@ucen.cl` se valida desde la etapa 1 y el rango de 1 a 3 intentos, desde la etapa 2.) |
