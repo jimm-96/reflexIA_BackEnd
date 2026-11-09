@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 0, estructura inicial. El proyecto y la aplicación están creados y configurados; los modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 1 de 8, usuarios autorizados (whitelist). Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -92,17 +92,46 @@ python manage.py runserver
 
 ## Endpoints
 
-Todavía no hay recursos registrados: `/api/` responde con una lista vacía. Esta tabla se completa en cada etapa.
+Esta sección se completa en cada etapa.
 
-| Recurso | Ruta | Métodos |
+### 1. Recurso: Usuarios autorizados (`/api/usuarios/`)
+
+Whitelist de correos que pueden ingresar a ReflexIA (HU-01).
+
+| Método | Ruta | Acción |
 | :--- | :--- | :--- |
-| — | — | — |
+| GET | `/api/usuarios/` | Lista todos los usuarios autorizados |
+| POST | `/api/usuarios/` | Autoriza un correo nuevo |
+| GET | `/api/usuarios/<id>/` | Muestra un usuario |
+| PUT / PATCH | `/api/usuarios/<id>/` | Modifica un usuario (por ejemplo, revoca su acceso) |
+| DELETE | `/api/usuarios/<id>/` | Elimina un usuario definitivamente |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "correo": "ana.perez@ucen.cl",
+    "nombre": "Ana Pérez",
+    "rol": "student"
+  }
+  ```
+* **Valores permitidos:** `rol` = `student`, `teacher` o `admin`; `estado` = `active` o `revoked`.
+* **Validaciones:** el correo debe terminar en `@ucen.cl` y no puede repetirse (sin importar mayúsculas). Si no se cumple, la API responde `400 Bad Request` con el motivo.
 
 ---
 
 ## Flujo de trabajo incremental
 
-Cada recurso se agrega en commits pequeños, con este orden:
+La configuración inicial (etapa 0) está en `main`. Cada etapa siguiente se desarrolla en su propia rama y se integra a `main` mediante un Pull Request:
+
+```bash
+git switch main
+git pull
+git switch -c feature/recurso-<nombre>     # por ejemplo, feature/recurso-usuarios
+# ... commits de la etapa ...
+git push -u origin feature/recurso-<nombre>
+```
+
+Dentro de cada rama, el recurso se agrega en commits pequeños, con este orden:
 
 1. Modelo en `models.py` y su migración.
 2. Registro en `admin.py` y prueba desde el panel.
