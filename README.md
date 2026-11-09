@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 2 de 8, talleres. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 3 de 8, preguntas teóricas. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -143,6 +143,30 @@ Los cuatro talleres de la práctica, con su plazo y su límite de intentos (HU-0
   ```
 * **Opcionales:** `fecha_limite` (por defecto sin plazo) e `intentos_maximos` (por defecto 3).
 * **Validaciones:** `numero` es único y va de 1 a 4; `intentos_maximos` va de 1 a 3; `fecha_limite` debe ser una fecha real en formato `AAAA-MM-DD`. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+
+### 3. Recurso: Preguntas teóricas (`/api/preguntas/`)
+
+Banco de preguntas del cuestionario del marco teórico, cada una con sus alternativas (HU-04).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/preguntas/` | Lista las preguntas, cada una con sus alternativas |
+| POST | `/api/preguntas/` | Crea una pregunta |
+| GET | `/api/preguntas/<id>/` | Muestra una pregunta con sus alternativas |
+| PUT / PATCH | `/api/preguntas/<id>/` | Modifica una pregunta (por ejemplo, la desactiva) |
+| DELETE | `/api/preguntas/<id>/` | Elimina una pregunta junto con sus alternativas |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "enunciado": "¿Qué es un incidente crítico en el contexto de la práctica docente?",
+    "activa": true
+  }
+  ```
+* **Respuesta (GET):** cada pregunta incluye la lista `alternativas`, con `id`, `texto` y `es_correcta`.
+* **Opcionales:** `activa` (por defecto `true`).
+* **Validaciones:** `enunciado` no puede estar vacío. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+* **Alternativas:** por ahora se cargan desde el panel de administración, en la misma pantalla de la pregunta. En la API son de solo lectura.
 
 ---
 

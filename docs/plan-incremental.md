@@ -30,7 +30,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 |---|---|
 | 0 | `main` (directo) |
 | 1 | `recurso-usuarios` (PR #1, integrado) |
-| 2 | `recurso-talleres` |
+| 2 | `recurso-talleres` (PR #2, integrado) |
 | 3 | `recurso-preguntas` |
 | 4 | `recurso-intentos-cuestionario` |
 | 5 | `recurso-reflexiones` |
@@ -128,6 +128,56 @@ Cómo probarla:
 3. Comprobar que se rechazan un número repetido, el número 5 y 4 intentos.
 4. En `/api/talleres/`: listar, crear, y en `/api/talleres/<id>/` editar el plazo o los intentos (PATCH) y eliminar.
 
+## Etapa 3: preguntas teóricas (HU-04) ✅
+
+Rama: `recurso-preguntas`.
+
+Modelos `PreguntaTeorica` y `Alternativa`: el banco de preguntas del cuestionario del marco teórico. Equivalen a `QuizQuestion` y `QuizOption` del frontend (`src/models/theoryQuiz.ts`).
+
+`PreguntaTeorica`:
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `enunciado` | `TextField` | Texto de la pregunta. Obligatorio. |
+| `activa` | `BooleanField` | Por defecto `True`. Permite sacar una pregunta del cuestionario sin borrarla. |
+
+`Alternativa`:
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `pregunta` | `ForeignKey` a `PreguntaTeorica` | `on_delete=CASCADE`: al borrar la pregunta se borran sus alternativas. `related_name='alternativas'`. |
+| `texto` | `CharField` | Texto de la opción, hasta 300 caracteres. |
+| `es_correcta` | `BooleanField` | Por defecto `False`. Marca la respuesta correcta. |
+
+Decisiones:
+
+- En el frontend la respuesta correcta se guarda en la pregunta (`correctOptionId`); aquí cada alternativa indica si es correcta con `es_correcta`, como propone el plan.
+- En el admin, las alternativas se cargan en la misma pantalla de la pregunta (`TabularInline` con 4 filas), y `Alternativa` no se registra por separado para que no queden alternativas sin pregunta.
+- En la API, cada pregunta trae sus alternativas anidadas (`AlternativaSerializer` dentro de `PreguntaTeoricaSerializer`). Son de solo lectura: se crean desde el admin.
+- El ViewSet usa `prefetch_related('alternativas')`, que trae las alternativas de todas las preguntas en una sola consulta en vez de una por pregunta.
+
+Pendientes para el ajuste final:
+
+- La API muestra `es_correcta`. Cuando haya autenticación (etapa 10), el estudiante no debería ver cuál es la respuesta correcta.
+- Las alternativas no se pueden crear ni editar por la API. Si el frontend necesita cargar preguntas, el serializer tendrá que aceptar alternativas anidadas.
+- No se valida que cada pregunta tenga exactamente una alternativa correcta (etapa 11).
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0003_preguntateorica_alternativa.py` | `feat: agrega modelos PreguntaTeorica y Alternativa` |
+| 2 | `reflexIA_App/admin.py` | `feat: registra PreguntaTeorica en el admin con sus alternativas` |
+| 3 | `reflexIA_App/serializers.py` | `feat: agrega PreguntaTeoricaSerializer` |
+| 4 | `reflexIA_App/views.py` | `feat: agrega PreguntaTeoricaViewSet` |
+| 5 | `reflexIA_App/urls.py` | `feat: expone /api/preguntas/ en el router` |
+| 6 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 3 (preguntas teóricas)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate`.
+2. En `/admin/` → **Preguntas teóricas**: crear una pregunta con cuatro alternativas y marcar una como correcta.
+3. En `/api/preguntas/`: comprobar que la pregunta aparece con sus alternativas anidadas, crear otra (POST), y comprobar que un enunciado vacío se rechaza.
+4. En `/api/preguntas/<id>/`: desactivarla (PATCH con `"activa": false`) y eliminarla (DELETE). Al eliminar una pregunta también se eliminan sus alternativas.
+
 ## Recursos previstos
 
 Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombres y campos son una propuesta; se confirman al empezar cada etapa.
@@ -136,7 +186,7 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 |---|---|---|---|---|
 | 1 ✅ | `UsuarioAutorizado` | HU-01 Whitelist | `correo` (`@ucen.cl`, único), `nombre`, `rol`, `estado`, `fecha_registro`, `fecha_revocacion` | `/api/usuarios/` |
 | 2 ✅ | `Taller` | HU-03, HU-06, HU-09 | `numero`, `titulo`, `objetivo`, `actividad`, `producto`, `fecha_limite`, `intentos_maximos` (3 por defecto) | `/api/talleres/` |
-| 3 | `PreguntaTeorica` y `Alternativa` | HU-04 Marco teórico | Pregunta: `enunciado`, `activa`. Alternativa: `pregunta` (FK), `texto`, `es_correcta` | `/api/preguntas/` |
+| 3 ✅ | `PreguntaTeorica` y `Alternativa` | HU-04 Marco teórico | Pregunta: `enunciado`, `activa`. Alternativa: `pregunta` (FK), `texto`, `es_correcta` | `/api/preguntas/` |
 | 4 | `IntentoCuestionario` | HU-04 | `estudiante` (FK), `respuestas_correctas`, `nota`, `aprobado`, `fecha` | `/api/intentos-cuestionario/` |
 | 5 | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados` | `/api/reflexiones/` |
 | 6 | `Retroalimentacion` | HU-02 El Impulso | `reflexion` (FK), `propuesta_ia`, `comentario_docente`, `estado` (pendiente, editada, validada) | `/api/retroalimentaciones/` |
