@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 # Único dominio institucional permitido (RN-01, DEC-03).
@@ -60,3 +61,44 @@ class UsuarioAutorizado(models.Model):
 
     def __str__(self):
         return f'{self.correo} ({self.get_rol_display()})'
+
+
+class Taller(models.Model):
+    """
+    Uno de los cuatro talleres de la práctica (HU-03, HU-06, HU-09).
+
+    Equivale a `Workshop` del frontend (src/models/criticalIncident.ts) junto
+    con el plazo y los intentos que configura el profesor guía
+    (src/models/workPacing.ts). Guarda solo la definición del taller; el
+    avance de cada estudiante va en modelos de etapas posteriores.
+    """
+
+    # La práctica tiene exactamente cuatro talleres (RF-03).
+    NUMERO_MAXIMO = 4
+    # Intentos de revisión: 3 por defecto, configurables de 1 a 3 (DEC-11).
+    INTENTOS_POR_DEFECTO = 3
+    INTENTOS_MAXIMOS_PERMITIDOS = 3
+
+    numero = models.PositiveSmallIntegerField(
+        'número',
+        unique=True,
+        validators=[MinValueValidator(1), MaxValueValidator(NUMERO_MAXIMO)],
+    )
+    titulo = models.CharField('título', max_length=150)
+    objetivo = models.TextField()
+    actividad = models.TextField()
+    producto = models.TextField()
+    fecha_limite = models.DateField('fecha límite', null=True, blank=True)
+    intentos_maximos = models.PositiveSmallIntegerField(
+        'intentos máximos',
+        default=INTENTOS_POR_DEFECTO,
+        validators=[MinValueValidator(1), MaxValueValidator(INTENTOS_MAXIMOS_PERMITIDOS)],
+    )
+
+    class Meta:
+        verbose_name = 'taller'
+        verbose_name_plural = 'talleres'
+        ordering = ['numero']
+
+    def __str__(self):
+        return f'Taller {self.numero}: {self.titulo}'
