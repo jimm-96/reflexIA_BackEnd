@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -148,3 +150,49 @@ class Alternativa(models.Model):
 
     def __str__(self):
         return self.texto
+
+
+class IntentoCuestionario(models.Model):
+    """
+    Un intento de un estudiante en el cuestionario del marco teórico (HU-04).
+
+    Equivale a `QuizAttempt` del frontend (src/models/theoryQuiz.ts).
+    Por ahora solo guarda el resultado; las reglas de aprobación y de
+    intentos por bloques se aplican en una etapa posterior.
+    """
+
+    # Cada intento tiene 10 preguntas sacadas del banco (RF-04).
+    PREGUNTAS_POR_INTENTO = 10
+    # Escala de notas chilena.
+    NOTA_MINIMA = Decimal('1.0')
+    NOTA_MAXIMA = Decimal('7.0')
+
+    estudiante = models.ForeignKey(
+        UsuarioAutorizado,
+        on_delete=models.CASCADE,
+        related_name='intentos_cuestionario',
+        # Solo los estudiantes rinden el cuestionario.
+        limit_choices_to={'rol': 'student'},
+    )
+    respuestas_correctas = models.PositiveSmallIntegerField(
+        'respuestas correctas',
+        validators=[MaxValueValidator(PREGUNTAS_POR_INTENTO)],
+    )
+    nota = models.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        validators=[MinValueValidator(NOTA_MINIMA), MaxValueValidator(NOTA_MAXIMA)],
+    )
+    aprobado = models.BooleanField(default=False)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'intento de cuestionario'
+        verbose_name_plural = 'intentos de cuestionario'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return (
+            f'{self.estudiante.correo}: '
+            f'{self.respuestas_correctas}/{self.PREGUNTAS_POR_INTENTO}, nota {self.nota}'
+        )

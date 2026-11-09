@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 3 de 8, preguntas teóricas. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 4 de 8, intentos de cuestionario. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -167,6 +167,31 @@ Banco de preguntas del cuestionario del marco teórico, cada una con sus alterna
 * **Opcionales:** `activa` (por defecto `true`).
 * **Validaciones:** `enunciado` no puede estar vacío. Si no se cumple, la API responde `400 Bad Request` con el motivo.
 * **Alternativas:** por ahora se cargan desde el panel de administración, en la misma pantalla de la pregunta. En la API son de solo lectura.
+
+### 4. Recurso: Intentos de cuestionario (`/api/intentos-cuestionario/`)
+
+Cada vez que un estudiante rinde el cuestionario del marco teórico, con su resultado (HU-04).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/intentos-cuestionario/` | Lista los intentos, del más reciente al más antiguo |
+| POST | `/api/intentos-cuestionario/` | Registra un intento |
+| GET | `/api/intentos-cuestionario/<id>/` | Muestra un intento |
+| PUT / PATCH | `/api/intentos-cuestionario/<id>/` | Modifica un intento |
+| DELETE | `/api/intentos-cuestionario/<id>/` | Elimina un intento |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "estudiante": 1,
+    "respuestas_correctas": 9,
+    "nota": 6.6,
+    "aprobado": true
+  }
+  ```
+* **Respuesta:** incluye además `correo_estudiante` y `fecha`, que son de solo lectura. La fecha se llena sola al crear el intento.
+* **Opcionales:** `aprobado` (por defecto `false`).
+* **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `respuestas_correctas` va de 0 a 10; `nota` va de 1.0 a 7.0, con un decimal. Si no se cumple, la API responde `400 Bad Request` con el motivo.
 
 ---
 

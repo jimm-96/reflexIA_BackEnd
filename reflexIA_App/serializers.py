@@ -3,6 +3,7 @@ from rest_framework.validators import UniqueValidator
 
 from .models import (
     Alternativa,
+    IntentoCuestionario,
     PreguntaTeorica,
     Taller,
     UsuarioAutorizado,
@@ -50,3 +51,34 @@ class PreguntaTeoricaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PreguntaTeorica
         fields = ('id', 'enunciado', 'activa', 'alternativas')
+
+
+class IntentoCuestionarioSerializer(serializers.ModelSerializer):
+    # El estudiante se recibe por su id; el correo se agrega en la
+    # respuesta para que se lea quién rindió sin buscar el id.
+    correo_estudiante = serializers.EmailField(source='estudiante.correo', read_only=True)
+
+    class Meta:
+        model = IntentoCuestionario
+        fields = (
+            'id',
+            'estudiante',
+            'correo_estudiante',
+            'respuestas_correctas',
+            'nota',
+            'aprobado',
+            'fecha',
+        )
+        read_only_fields = ('fecha',)
+        extra_kwargs = {
+            # La nota sale como número (6.6) y no como texto ("6.6"),
+            # igual que la usa el frontend.
+            'nota': {'coerce_to_string': False},
+            # Un profesor existe, pero no puede tener intentos: el mensaje
+            # por defecto ("objeto no existe") confundiría.
+            'estudiante': {
+                'error_messages': {
+                    'does_not_exist': 'No existe un estudiante con id {pk_value}.',
+                },
+            },
+        }
