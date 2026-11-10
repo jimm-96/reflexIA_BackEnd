@@ -3,7 +3,9 @@ from django.contrib import admin
 from .models import (
     Alternativa,
     Evaluacion,
+    Innovacion,
     IntentoCuestionario,
+    PasoInnovacion,
     PreguntaTeorica,
     Reflexion,
     Retroalimentacion,
@@ -80,3 +82,24 @@ class EvaluacionAdmin(admin.ModelAdmin):
     search_fields = ('estudiante__correo', 'estudiante__nombre', 'taller__titulo')
     readonly_fields = ('fecha',)
     list_select_related = ('estudiante', 'taller')
+
+
+class PasoInnovacionInline(admin.TabularInline):
+    model = PasoInnovacion
+    extra = 3
+
+
+@admin.register(Innovacion)
+class InnovacionAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'categoria', 'autor', 'publicada', 'fecha_actualizacion')
+    list_filter = ('categoria', 'publicada')
+    search_fields = ('titulo', 'resumen', 'etiquetas')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
+    list_select_related = ('autor',)
+    # Los pasos se cargan en la misma pantalla, igual que las alternativas.
+    inlines = [PasoInnovacionInline]
+    fieldsets = (
+        (None, {'fields': ('titulo', 'categoria', 'autor', 'publicada', 'etiquetas')}),
+        ('Caso pedagógico', {'fields': ('resumen', 'contexto', 'desafio', 'actuacion', 'impacto_esperado')}),
+        ('Fechas', {'fields': ('fecha_creacion', 'fecha_actualizacion')}),
+    )
