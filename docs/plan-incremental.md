@@ -32,7 +32,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 1 | `recurso-usuarios` (PR #1, integrado) |
 | 2 | `recurso-talleres` (PR #2, integrado) |
 | 3 | `recurso-preguntas` (PR #3, integrado) |
-| 4 | `recurso-intentos-cuestionario` |
+| 4 | `recurso-intentos-cuestionario` (PR #4, integrado) |
 | 5 | `recurso-reflexiones` |
 | 6 | `recurso-retroalimentaciones` |
 | 7 | `recurso-evaluaciones` |
@@ -222,6 +222,53 @@ Cómo probarla:
 3. En `/admin/` → **Intentos de cuestionario**: comprobar que la lista de estudiantes no incluye al profesor, crear un intento (por ejemplo, 9 correctas y nota 6.6) y comprobar que se rechazan 11 correctas y la nota 8.
 4. En `/api/intentos-cuestionario/`: listar, crear (POST) y comprobar que el id de un profesor se rechaza. En `/api/intentos-cuestionario/<id>/`: editar (PATCH) y eliminar (DELETE).
 
+## Etapa 5: reflexiones (HU-03) ✅
+
+Rama: `recurso-reflexiones`.
+
+Modelo `Reflexion`: el análisis de un incidente crítico que un estudiante escribe en un taller. Equivale a `IncidentDraft` y `WorkshopAttempt` del frontend (`src/models/criticalIncident.ts`). Es el primer modelo con dos llaves foráneas.
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `estudiante` | `ForeignKey` a `UsuarioAutorizado` | Solo usuarios con rol `student` (`limit_choices_to`). `on_delete=CASCADE`. `related_name='reflexiones'`. |
+| `taller` | `ForeignKey` a `Taller` | `on_delete=CASCADE`: al eliminar el taller se eliminan sus reflexiones. `related_name='reflexiones'`. |
+| `contexto`, `descripcion`, `actores`, `relevancia` | `TextField` | Los cuatro pasos del formulario del frontend (`context`, `description`, `actors`, `relevance`). Pueden quedar vacíos (`blank=True`) mientras la reflexión es un borrador. |
+| `estado` | `CharField` con opciones | `draft` (Borrador, por defecto), `submitted` (Enviada) o `reviewed` (Revisada). |
+| `intentos_usados` | `PositiveSmallIntegerField` | De 0 a 3, por defecto 0. |
+| `fecha_creacion` | `DateTimeField` | Se llena sola al crear (`auto_now_add`); solo lectura. |
+| `fecha_actualizacion` | `DateTimeField` | Se actualiza sola cada vez que se guarda (`auto_now`); solo lectura. Equivale a `savedAt` del borrador en el frontend. |
+
+Decisiones:
+
+- Un estudiante tiene una sola reflexión por taller (`UniqueConstraint` sobre `estudiante` y `taller`). Los reintentos se cuentan en `intentos_usados`, no como filas nuevas. La regla está en el modelo, así que el admin y la API la aplican con el mismo mensaje: "Este estudiante ya tiene una reflexión en este taller."
+- Los valores guardados de `estado` son los del frontend, en inglés, igual que `rol` en la etapa 1; las etiquetas se muestran en español.
+- El tope de `intentos_usados` reutiliza la constante `Taller.INTENTOS_MAXIMOS_PERMITIDOS` (3), en vez de repetir el número.
+- El estudiante y el taller se envían por id; la respuesta agrega `correo_estudiante` y `numero_taller` (solo lectura).
+- El ViewSet y el admin usan `select_related('estudiante', 'taller')`. Con 9 reflexiones, la lista se obtiene en 1 consulta en vez de 19.
+- El formulario del admin se separa en secciones (`fieldsets`): datos, análisis del incidente y fechas.
+
+Pendientes para el ajuste final:
+
+- `intentos_usados` y `estado` los envía el cliente. Las reglas (no superar los `intentos_maximos` de cada taller, que pueden ser 1 o 2; cambios de estado en orden; mínimo de 50 caracteres por texto para enviar; cierre al vencer `fecha_limite`) se aplican en la etapa 11.
+- Solo se guarda el contenido más reciente. El frontend guarda el texto de cada intento (`WorkshopAttempt.content`) y las respuestas a pasos configurados por el docente (`answers`, C-05); falta decidir si van en un modelo aparte.
+- No hay filtros por estudiante ni por taller (`?estudiante=<id>`, `?taller=<id>`).
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0005_reflexion.py` | `feat: agrega modelo Reflexion` |
+| 2 | `reflexIA_App/admin.py` | `feat: registra Reflexion en el admin` |
+| 3 | `reflexIA_App/serializers.py` | `feat: agrega ReflexionSerializer` |
+| 4 | `reflexIA_App/views.py` | `feat: agrega ReflexionViewSet` |
+| 5 | `reflexIA_App/urls.py` | `feat: expone /api/reflexiones/ en el router` |
+| 6 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 5 (reflexiones)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate`.
+2. Tener al menos un estudiante, un profesor y dos talleres.
+3. En `/admin/` → **Reflexiones**: crear una reflexión con solo el contexto (se acepta como borrador), comprobar que la lista de estudiantes no incluye al profesor, y que se rechazan una segunda reflexión del mismo estudiante en el mismo taller y 4 intentos usados.
+4. En `/api/reflexiones/`: crear una reflexión en el otro taller (POST) y comprobar que el duplicado se rechaza. En `/api/reflexiones/<id>/`: enviarla (PATCH con `"estado": "submitted"` e `"intentos_usados": 1`), comprobar que cambia `fecha_actualizacion`, y eliminarla (DELETE).
+
 ## Recursos previstos
 
 Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombres y campos son una propuesta; se confirman al empezar cada etapa.
@@ -232,7 +279,7 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 | 2 ✅ | `Taller` | HU-03, HU-06, HU-09 | `numero`, `titulo`, `objetivo`, `actividad`, `producto`, `fecha_limite`, `intentos_maximos` (3 por defecto) | `/api/talleres/` |
 | 3 ✅ | `PreguntaTeorica` y `Alternativa` | HU-04 Marco teórico | Pregunta: `enunciado`, `activa`. Alternativa: `pregunta` (FK), `texto`, `es_correcta` | `/api/preguntas/` |
 | 4 ✅ | `IntentoCuestionario` | HU-04 | `estudiante` (FK), `respuestas_correctas`, `nota`, `aprobado`, `fecha` | `/api/intentos-cuestionario/` |
-| 5 | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados` | `/api/reflexiones/` |
+| 5 ✅ | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados`, `fecha_creacion`, `fecha_actualizacion` | `/api/reflexiones/` |
 | 6 | `Retroalimentacion` | HU-02 El Impulso | `reflexion` (FK), `propuesta_ia`, `comentario_docente`, `estado` (pendiente, editada, validada) | `/api/retroalimentaciones/` |
 | 7 | `Evaluacion` | HU-02, panel docente | `estudiante` (FK), `taller` (FK), `nota` (1,0 a 7,0), `resultado` (aprobado, reprobado), `fecha` | `/api/evaluaciones/` |
 | 8 | `Innovacion` | HU-07 Biblioteca | `titulo`, `categoria`, `descripcion`, `autor` (FK), `publicada` | `/api/innovaciones/` |
