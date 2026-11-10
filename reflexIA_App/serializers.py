@@ -3,6 +3,7 @@ from rest_framework.validators import UniqueValidator
 
 from .models import (
     Alternativa,
+    Evaluacion,
     IntentoCuestionario,
     PreguntaTeorica,
     Reflexion,
@@ -153,4 +154,36 @@ class RetroalimentacionSerializer(serializers.ModelSerializer):
                     'does_not_exist': 'No existe una reflexión con id {pk_value}.',
                 },
             },
+        }
+
+
+class EvaluacionSerializer(serializers.ModelSerializer):
+    correo_estudiante = serializers.EmailField(source='estudiante.correo', read_only=True)
+    numero_taller = serializers.IntegerField(source='taller.numero', read_only=True)
+
+    class Meta:
+        model = Evaluacion
+        fields = (
+            'id',
+            'estudiante',
+            'correo_estudiante',
+            'taller',
+            'numero_taller',
+            'nota',
+            'resultado',
+            'fecha',
+        )
+        read_only_fields = ('fecha',)
+        extra_kwargs = {
+            'estudiante': {
+                'error_messages': {
+                    'does_not_exist': 'No existe un estudiante con id {pk_value}.',
+                },
+            },
+            'taller': {
+                'error_messages': {
+                    'does_not_exist': 'No existe un taller con id {pk_value}.',
+                },
+            },
+            'nota': {'coerce_to_string': False},
         }
