@@ -35,7 +35,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 4 | `recurso-intentos-cuestionario` (PR #4, integrado) |
 | 5 | `recurso-reflexiones` |
 | 6 | `recurso-retroalimentaciones` (PR #6, integrado) |
-| 7 | `recurso-evaluaciones` (en integración) |
+| 7 | `recurso-evaluaciones` (PR #7, integrado) |
 | 8 | `recurso-innovaciones` |
 | 9 | `config-mysql` |
 
@@ -304,7 +304,7 @@ Cómo probarla:
 3. En `/api/retroalimentaciones/`: listar y crear (POST) una retroalimentación vinculada a una reflexión existente.
 4. En `/api/retroalimentaciones/<id>/`: cambiar el comentario o estado (PATCH) y eliminar (DELETE). Comprobar que una reflexión inexistente se rechaza.
 
-## Etapa 7: evaluaciones (HU-02, panel docente) ⏳
+## Etapa 7: evaluaciones (HU-02, panel docente) ✅
 
 Rama: `recurso-evaluaciones`.
 
