@@ -4,6 +4,7 @@ from .models import (
     Alternativa,
     IntentoCuestionario,
     PreguntaTeorica,
+    Reflexion,
     Taller,
     UsuarioAutorizado,
 )
@@ -44,3 +45,19 @@ class IntentoCuestionarioAdmin(admin.ModelAdmin):
     readonly_fields = ('fecha',)
     # Trae el estudiante de cada intento en la misma consulta.
     list_select_related = ('estudiante',)
+
+
+@admin.register(Reflexion)
+class ReflexionAdmin(admin.ModelAdmin):
+    list_display = ('estudiante', 'taller', 'estado', 'intentos_usados', 'fecha_actualizacion')
+    list_filter = ('estado', 'taller')
+    search_fields = ('estudiante__correo', 'estudiante__nombre')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
+    # Trae el estudiante y el taller de cada reflexión en la misma consulta.
+    list_select_related = ('estudiante', 'taller')
+    # Agrupa el formulario en secciones, igual que los pasos del frontend.
+    fieldsets = (
+        (None, {'fields': ('estudiante', 'taller', 'estado', 'intentos_usados')}),
+        ('Análisis del incidente', {'fields': ('contexto', 'descripcion', 'actores', 'relevancia')}),
+        ('Fechas', {'fields': ('fecha_creacion', 'fecha_actualizacion')}),
+    )
