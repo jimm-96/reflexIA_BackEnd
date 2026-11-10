@@ -286,3 +286,52 @@ class Retroalimentacion(models.Model):
 
     def __str__(self):
         return f'Reflexión {self.reflexion_id}: {self.get_estado_display()}'
+
+
+class Evaluacion(models.Model):
+    """Nota oficial de un estudiante en un taller (HU-02, panel docente)."""
+
+    RESULTADO_CHOICES = [
+        ('approved', 'Aprobado'),
+        ('failed', 'Reprobado'),
+    ]
+
+    NOTA_MINIMA = Decimal('1.0')
+    NOTA_MAXIMA = Decimal('7.0')
+
+    estudiante = models.ForeignKey(
+        UsuarioAutorizado,
+        on_delete=models.CASCADE,
+        related_name='evaluaciones',
+        limit_choices_to={'rol': 'student'},
+    )
+    taller = models.ForeignKey(
+        Taller,
+        on_delete=models.CASCADE,
+        related_name='evaluaciones',
+    )
+    nota = models.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        validators=[MinValueValidator(NOTA_MINIMA), MaxValueValidator(NOTA_MAXIMA)],
+    )
+    resultado = models.CharField(max_length=8, choices=RESULTADO_CHOICES)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'evaluación'
+        verbose_name_plural = 'evaluaciones'
+        ordering = ['estudiante__correo', 'taller__numero']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['estudiante', 'taller'],
+                name='evaluacion_unica_por_taller',
+                violation_error_message='Este estudiante ya tiene una evaluación en este taller.',
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f'{self.estudiante.correo}: Taller {self.taller.numero}, '
+            f'nota {self.nota} ({self.get_resultado_display()})'
+        )
