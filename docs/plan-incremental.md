@@ -36,7 +36,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 5 | `recurso-reflexiones` |
 | 6 | `recurso-retroalimentaciones` (PR #6, integrado) |
 | 7 | `recurso-evaluaciones` (PR #7, integrado) |
-| 8 | `feat/recurso-innovaciones` |
+| 8 | `feat/recurso-innovaciones` (PR #10, integrado) |
 | 9 | `config-mysql` |
 
 ## Etapa 0: estructura inicial ✅
@@ -341,7 +341,7 @@ Cómo probarla:
 3. En `/api/evaluaciones/`: listar y crear (POST) una evaluación, comprobando la respuesta con correo y número de taller.
 4. Probar notas fuera del rango, ids inválidos y una segunda evaluación para el mismo estudiante y taller; deben rechazarse. En `/api/evaluaciones/<id>/`: editar (PATCH) y eliminar (DELETE).
 
-## Etapa 8: innovaciones (HU-07, biblioteca) ⏳
+## Etapa 8: innovaciones (HU-07, biblioteca) ✅
 
 Rama: `feat/recurso-innovaciones`.
 
@@ -423,7 +423,7 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 | 5 ✅ | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados`, `fecha_creacion`, `fecha_actualizacion` | `/api/reflexiones/` |
 | 6 ✅ | `Retroalimentacion` | HU-02 El Impulso | `reflexion` (FK), `propuesta_ia`, `comentario_docente`, `estado` (pendiente, editada, validada) | `/api/retroalimentaciones/` |
 | 7 ✅ | `Evaluacion` | HU-02, panel docente | `estudiante` (FK), `taller` (FK), `nota` (1,0 a 7,0), `resultado` (aprobado, reprobado), `fecha` | `/api/evaluaciones/` |
-| 8 | `Innovacion` y `PasoInnovacion` | HU-07 Biblioteca | Innovación: `titulo`, `categoria`, `resumen`, `contexto`, `desafio`, `actuacion`, `impacto_esperado`, `etiquetas`, `autor` (FK), `publicada`. Paso: `innovacion` (FK), `orden`, `texto` | `/api/innovaciones/` |
+| 8 ✅ | `Innovacion` y `PasoInnovacion` | HU-07 Biblioteca | Innovación: `titulo`, `categoria`, `resumen`, `contexto`, `desafio`, `actuacion`, `impacto_esperado`, `etiquetas`, `autor` (FK), `publicada`. Paso: `innovacion` (FK), `orden`, `texto` | `/api/innovaciones/` |
 
 El orden importa: los modelos con llaves foráneas (FK) van después de los modelos a los que apuntan.
 
