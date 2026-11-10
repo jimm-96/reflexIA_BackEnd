@@ -196,3 +196,66 @@ class IntentoCuestionario(models.Model):
             f'{self.estudiante.correo}: '
             f'{self.respuestas_correctas}/{self.PREGUNTAS_POR_INTENTO}, nota {self.nota}'
         )
+
+
+class Reflexion(models.Model):
+    """
+    Análisis de un incidente crítico que un estudiante escribe en un taller (HU-03).
+
+    Equivale a `IncidentDraft` y `WorkshopAttempt` del frontend
+    (src/models/criticalIncident.ts). Los cuatro textos son los cuatro
+    pasos del formulario. Los valores guardados de `estado` siguen el
+    frontend; las etiquetas se muestran en español.
+    """
+
+    ESTADO_CHOICES = [
+        ('draft', 'Borrador'),
+        ('submitted', 'Enviada'),
+        ('reviewed', 'Revisada'),
+    ]
+
+    estudiante = models.ForeignKey(
+        UsuarioAutorizado,
+        on_delete=models.CASCADE,
+        related_name='reflexiones',
+        # Solo los estudiantes escriben reflexiones.
+        limit_choices_to={'rol': 'student'},
+    )
+    taller = models.ForeignKey(
+        Taller,
+        on_delete=models.CASCADE,
+        related_name='reflexiones',
+    )
+    # Los textos pueden quedar vacíos mientras la reflexión es un borrador.
+    contexto = models.TextField(blank=True)
+    descripcion = models.TextField('descripción del hecho', blank=True)
+    actores = models.TextField('actores e influencia', blank=True)
+    relevancia = models.TextField('relevancia pedagógica', blank=True)
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='draft')
+    intentos_usados = models.PositiveSmallIntegerField(
+        'intentos usados',
+        default=0,
+        validators=[MaxValueValidator(Taller.INTENTOS_MAXIMOS_PERMITIDOS)],
+    )
+    fecha_creacion = models.DateTimeField('fecha de creación', auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField('última actualización', auto_now=True)
+
+    class Meta:
+        verbose_name = 'reflexión'
+        verbose_name_plural = 'reflexiones'
+        ordering = ['estudiante__correo', 'taller__numero']
+        constraints = [
+            # Un estudiante tiene una sola reflexión por taller; sus
+            # reintentos se cuentan en `intentos_usados`.
+            models.UniqueConstraint(
+                fields=['estudiante', 'taller'],
+                name='reflexion_unica_por_taller',
+                violation_error_message='Este estudiante ya tiene una reflexión en este taller.',
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f'{self.estudiante.correo}: Taller {self.taller.numero} '
+            f'({self.get_estado_display()})'
+        )
