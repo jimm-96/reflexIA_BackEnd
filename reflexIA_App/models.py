@@ -383,3 +383,35 @@ class Innovacion(models.Model):
 
     def __str__(self):
         return f'{self.titulo} ({self.get_categoria_display()})'
+
+
+class PasoInnovacion(models.Model):
+    """
+    Paso para adaptar una innovación, en orden (HU-07).
+
+    Equivale a cada elemento de `implementation` en `InnovationCase`.
+    """
+
+    innovacion = models.ForeignKey(
+        Innovacion,
+        on_delete=models.CASCADE,
+        related_name='pasos',
+    )
+    orden = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    texto = models.TextField()
+
+    class Meta:
+        verbose_name = 'paso de implementación'
+        verbose_name_plural = 'pasos de implementación'
+        ordering = ['innovacion', 'orden']
+        constraints = [
+            # Dos pasos de la misma innovación no pueden tener el mismo orden.
+            models.UniqueConstraint(
+                fields=['innovacion', 'orden'],
+                name='paso_unico_por_orden',
+                violation_error_message='Esta innovación ya tiene un paso con ese orden.',
+            ),
+        ]
+
+    def __str__(self):
+        return f'Paso {self.orden}: {self.texto}'
