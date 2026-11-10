@@ -335,3 +335,51 @@ class Evaluacion(models.Model):
             f'{self.estudiante.correo}: Taller {self.taller.numero}, '
             f'nota {self.nota} ({self.get_resultado_display()})'
         )
+
+
+class Innovacion(models.Model):
+    """
+    Caso de la biblioteca de actuaciones mejoradas e innovaciones (HU-07).
+
+    Equivale a `InnovationCase` del frontend
+    (src/views/innovations/models/innovation.ts). Los valores guardados de
+    `categoria` son claves cortas; las etiquetas se muestran en español.
+    """
+
+    CATEGORIA_CHOICES = [
+        ('teaching', 'Estrategias de enseñanza'),
+        ('formative', 'Evaluación formativa'),
+        ('inclusion', 'Inclusión y participación'),
+        ('community', 'Vinculación con el entorno'),
+    ]
+
+    titulo = models.CharField('título', max_length=150)
+    categoria = models.CharField('categoría', max_length=10, choices=CATEGORIA_CHOICES)
+    resumen = models.TextField()
+    contexto = models.TextField()
+    desafio = models.TextField('desafío pedagógico')
+    actuacion = models.TextField('actuación mejorada')
+    impacto_esperado = models.TextField('impacto esperado')
+    # Palabras clave separadas por coma; la API las entrega como lista.
+    etiquetas = models.CharField(max_length=300, blank=True)
+    autor = models.ForeignKey(
+        UsuarioAutorizado,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='innovaciones',
+        # Solo el profesor guía o el administrador publican casos.
+        limit_choices_to={'rol__in': ['teacher', 'admin']},
+    )
+    # Un caso nuevo queda sin publicar hasta su revisión editorial.
+    publicada = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField('fecha de creación', auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField('última actualización', auto_now=True)
+
+    class Meta:
+        verbose_name = 'innovación'
+        verbose_name_plural = 'innovaciones'
+        ordering = ['categoria', 'titulo']
+
+    def __str__(self):
+        return f'{self.titulo} ({self.get_categoria_display()})'
