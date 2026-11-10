@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 5 de 8, reflexiones. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 6 de 8, retroalimentaciones. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -220,6 +220,32 @@ El análisis de un incidente crítico que cada estudiante escribe en un taller, 
 * **Valores permitidos:** `estado` = `draft` (borrador), `submitted` (enviada) o `reviewed` (revisada).
 * **Opcionales:** los cuatro textos (por defecto vacíos, para guardar borradores incompletos), `estado` (por defecto `draft`) e `intentos_usados` (por defecto 0).
 * **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `taller` es el id de un taller existente; `intentos_usados` va de 0 a 3; un estudiante tiene una sola reflexión por taller. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+
+### 6. Recurso: Retroalimentaciones (`/api/retroalimentaciones/`)
+
+Propuesta de la IA y comentario docente asociados a una reflexión (HU-02).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/retroalimentaciones/` | Lista las retroalimentaciones |
+| POST | `/api/retroalimentaciones/` | Registra una retroalimentación |
+| GET | `/api/retroalimentaciones/<id>/` | Muestra una retroalimentación |
+| PUT / PATCH | `/api/retroalimentaciones/<id>/` | Modifica su comentario o estado |
+| DELETE | `/api/retroalimentaciones/<id>/` | Elimina una retroalimentación |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "reflexion": 1,
+    "propuesta_ia": "Considera describir con más detalle la reacción del grupo.",
+    "comentario_docente": "Buen análisis; profundiza en las causas.",
+    "estado": "edited"
+  }
+  ```
+* **Respuesta:** incluye `correo_estudiante` y `numero_taller` de la reflexión; son de solo lectura.
+* **Valores permitidos:** `estado` = `pending` (pendiente), `edited` (editada) o `validated` (validada).
+* **Opcionales:** `comentario_docente` (por defecto vacío) y `estado` (por defecto `pending`).
+* **Validaciones:** `reflexion` debe ser el id de una reflexión existente. La propuesta de IA es obligatoria.
 
 ---
 

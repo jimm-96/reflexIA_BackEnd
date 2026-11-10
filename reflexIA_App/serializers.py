@@ -6,6 +6,7 @@ from .models import (
     IntentoCuestionario,
     PreguntaTeorica,
     Reflexion,
+    Retroalimentacion,
     Taller,
     UsuarioAutorizado,
     validar_correo_institucional,
@@ -120,6 +121,36 @@ class ReflexionSerializer(serializers.ModelSerializer):
             'taller': {
                 'error_messages': {
                     'does_not_exist': 'No existe un taller con id {pk_value}.',
+                },
+            },
+        }
+
+
+class RetroalimentacionSerializer(serializers.ModelSerializer):
+    correo_estudiante = serializers.EmailField(
+        source='reflexion.estudiante.correo',
+        read_only=True,
+    )
+    numero_taller = serializers.IntegerField(
+        source='reflexion.taller.numero',
+        read_only=True,
+    )
+
+    class Meta:
+        model = Retroalimentacion
+        fields = (
+            'id',
+            'reflexion',
+            'correo_estudiante',
+            'numero_taller',
+            'propuesta_ia',
+            'comentario_docente',
+            'estado',
+        )
+        extra_kwargs = {
+            'reflexion': {
+                'error_messages': {
+                    'does_not_exist': 'No existe una reflexión con id {pk_value}.',
                 },
             },
         }
