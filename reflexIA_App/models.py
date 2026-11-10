@@ -259,3 +259,30 @@ class Reflexion(models.Model):
             f'{self.estudiante.correo}: Taller {self.taller.numero} '
             f'({self.get_estado_display()})'
         )
+
+
+class Retroalimentacion(models.Model):
+    """Revisión docente de la propuesta de IA asociada a una reflexión (HU-02)."""
+
+    ESTADO_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('edited', 'Editada'),
+        ('validated', 'Validada'),
+    ]
+
+    reflexion = models.ForeignKey(
+        Reflexion,
+        on_delete=models.CASCADE,
+        related_name='retroalimentaciones',
+    )
+    propuesta_ia = models.TextField('propuesta de la IA')
+    comentario_docente = models.TextField('comentario docente', blank=True)
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pending')
+
+    class Meta:
+        verbose_name = 'retroalimentación'
+        verbose_name_plural = 'retroalimentaciones'
+        ordering = ['reflexion__id']
+
+    def __str__(self):
+        return f'Reflexión {self.reflexion_id}: {self.get_estado_display()}'
