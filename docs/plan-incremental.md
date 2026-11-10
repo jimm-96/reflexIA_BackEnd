@@ -34,7 +34,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 3 | `recurso-preguntas` (PR #3, integrado) |
 | 4 | `recurso-intentos-cuestionario` (PR #4, integrado) |
 | 5 | `recurso-reflexiones` |
-| 6 | `recurso-retroalimentaciones` |
+| 6 | `recurso-retroalimentaciones` (en integración) |
 | 7 | `recurso-evaluaciones` |
 | 8 | `recurso-innovaciones` |
 | 9 | `config-mysql` |
@@ -268,6 +268,41 @@ Cómo probarla:
 2. Tener al menos un estudiante, un profesor y dos talleres.
 3. En `/admin/` → **Reflexiones**: crear una reflexión con solo el contexto (se acepta como borrador), comprobar que la lista de estudiantes no incluye al profesor, y que se rechazan una segunda reflexión del mismo estudiante en el mismo taller y 4 intentos usados.
 4. En `/api/reflexiones/`: crear una reflexión en el otro taller (POST) y comprobar que el duplicado se rechaza. En `/api/reflexiones/<id>/`: enviarla (PATCH con `"estado": "submitted"` e `"intentos_usados": 1`), comprobar que cambia `fecha_actualizacion`, y eliminarla (DELETE).
+
+## Etapa 6: retroalimentaciones (HU-02) ⏳
+
+Rama: `recurso-retroalimentaciones`.
+
+Modelo `Retroalimentacion`: conserva la propuesta de la IA y el comentario del profesor guía asociado a una reflexión.
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `reflexion` | `ForeignKey` a `Reflexion` | `on_delete=CASCADE`: al eliminar la reflexión se elimina su retroalimentación. `related_name='retroalimentaciones'`. |
+| `propuesta_ia` | `TextField` | Orientación propuesta por la IA. Obligatoria. |
+| `comentario_docente` | `TextField` | Comentario del profesor guía. Puede quedar vacío mientras está pendiente. |
+| `estado` | `CharField` con opciones | `pending` (Pendiente), `edited` (Editada) o `validated` (Validada). |
+
+Decisiones:
+
+- Los valores de estado coinciden con el frontend (`ReviewStatus`); el admin y los mensajes los muestran en español.
+- La retroalimentación está asociada a la reflexión y su respuesta agrega el correo del estudiante y el número de taller para hacer legible la relación.
+- El flujo de transición entre estados y la validación obligatoria antes de entregar al estudiante se implementarán junto con las reglas de negocio posteriores.
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0006_retroalimentacion.py` | `feat: agrega modelo Retroalimentacion` |
+| 2 | `reflexIA_App/admin.py` | `feat: registra Retroalimentacion en el admin` |
+| 3 | `reflexIA_App/serializers.py` | `feat: agrega RetroalimentacionSerializer` |
+| 4 | `reflexIA_App/views.py` | `feat: agrega RetroalimentacionViewSet` |
+| 5 | `reflexIA_App/urls.py` | `feat: expone /api/retroalimentaciones/ en el router` |
+| 6 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 6 (retroalimentaciones)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate`.
+2. En `/admin/` → **Retroalimentaciones**: asociar una propuesta a una reflexión y comprobar los filtros por estado.
+3. En `/api/retroalimentaciones/`: listar y crear (POST) una retroalimentación vinculada a una reflexión existente.
+4. En `/api/retroalimentaciones/<id>/`: cambiar el comentario o estado (PATCH) y eliminar (DELETE). Comprobar que una reflexión inexistente se rechaza.
 
 ## Recursos previstos
 
