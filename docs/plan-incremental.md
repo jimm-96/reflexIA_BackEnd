@@ -36,7 +36,7 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 5 | `recurso-reflexiones` |
 | 6 | `recurso-retroalimentaciones` (PR #6, integrado) |
 | 7 | `recurso-evaluaciones` (PR #7, integrado) |
-| 8 | `recurso-innovaciones` |
+| 8 | `feat/recurso-innovaciones` |
 | 9 | `config-mysql` |
 
 ## Etapa 0: estructura inicial ✅
@@ -341,6 +341,75 @@ Cómo probarla:
 3. En `/api/evaluaciones/`: listar y crear (POST) una evaluación, comprobando la respuesta con correo y número de taller.
 4. Probar notas fuera del rango, ids inválidos y una segunda evaluación para el mismo estudiante y taller; deben rechazarse. En `/api/evaluaciones/<id>/`: editar (PATCH) y eliminar (DELETE).
 
+## Etapa 8: innovaciones (HU-07, biblioteca) ⏳
+
+Rama: `feat/recurso-innovaciones`.
+
+Modelos `Innovacion` y `PasoInnovacion`: la biblioteca de actuaciones mejoradas e innovaciones pedagógicas que consultan estudiantes y profesores. Equivalen a `InnovationCase` del frontend (`src/views/innovations/models/innovation.ts`), que hoy lee un catálogo fijo (`src/views/innovations/data/innovations.ts`).
+
+`Innovacion`:
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `titulo` | `CharField` | Hasta 150 caracteres. Equivale a `title`. |
+| `categoria` | `CharField` con opciones | `teaching` (Estrategias de enseñanza), `formative` (Evaluación formativa), `inclusion` (Inclusión y participación) o `community` (Vinculación con el entorno). Equivale a `category`. |
+| `resumen` | `TextField` | Texto corto de la tarjeta (`summary`). |
+| `contexto`, `desafio`, `actuacion`, `impacto_esperado` | `TextField` | Secciones del detalle (`context`, `challenge`, `action`, `expectedImpact`). |
+| `etiquetas` | `CharField` | Hasta 300 caracteres, separadas por coma. Opcional. La API las entrega como lista, igual que `tags`. |
+| `autor` | `ForeignKey` a `UsuarioAutorizado` | Opcional. Solo roles `teacher` o `admin` (`limit_choices_to`). `on_delete=SET_NULL`. `related_name='innovaciones'`. |
+| `publicada` | `BooleanField` | Por defecto `False`. |
+| `fecha_creacion` | `DateTimeField` | Se llena sola al crear; solo lectura. |
+| `fecha_actualizacion` | `DateTimeField` | Se actualiza sola al guardar; solo lectura. |
+
+`PasoInnovacion`:
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `innovacion` | `ForeignKey` a `Innovacion` | `on_delete=CASCADE`: al borrar la innovación se borran sus pasos. `related_name='pasos'`. |
+| `orden` | `PositiveSmallIntegerField` | Desde 1. Define el orden de los pasos. |
+| `texto` | `TextField` | Texto del paso. Equivale a cada elemento de `implementation`. |
+
+Decisiones:
+
+- El plan proponía `titulo`, `categoria`, `descripcion`, `autor` y `publicada`. Se reemplazó `descripcion` por los cinco textos que muestra el frontend, para que la integración no tenga que separar un texto en secciones.
+- Los pasos van en un modelo propio, siguiendo el patrón de `PreguntaTeorica` y `Alternativa` (etapa 3): se cargan en la misma pantalla del admin (`TabularInline`) y en la API van anidados y son de solo lectura. Un `UniqueConstraint` impide repetir el `orden` en una innovación.
+- Las etiquetas se guardan en un solo texto separado por comas y la API las convierte en lista (`EtiquetasField`). Por eso una etiqueta no puede contener comas.
+- Los valores guardados de `categoria` son claves cortas en inglés, como `rol` y `estado` en las etapas anteriores; las etiquetas en español son las mismas categorías del frontend.
+- El autor es opcional y usa `SET_NULL`: los casos de ejemplo no tienen autor, y si se elimina a un profesor, sus casos siguen en la biblioteca.
+- Un caso nuevo queda sin publicar (`publicada=False`), porque la HU-07 pide una revisión editorial antes de publicar experiencias reales.
+- Es el primer recurso con filtros, porque la HU-07 los exige (criterio 2): `?categoria=` y `?publicada=` en `get_queryset`, y `?search=` con el `SearchFilter` de DRF (sin dependencias nuevas), en los mismos campos que el buscador del frontend. Un valor no permitido en un filtro responde `400`, en vez de devolver una lista vacía.
+- El ViewSet usa `select_related('autor')` y `prefetch_related('pasos')`.
+- El fixture `innovaciones.json` trae los 5 casos ilustrativos del frontend, publicados y sin autor. Lleva fechas fijas porque `loaddata` no llena `auto_now_add`.
+
+Pendientes para el ajuste final:
+
+- Cuando haya autenticación (etapa 10), el estudiante debería ver solo las innovaciones publicadas, y solo profesores y administradores deberían crearlas o editarlas.
+- En SQLite, `?search=` distingue tildes, y las mayúsculas solo se ignoran en letras sin tilde ("evaluacion" no encuentra "evaluación"). El frontend ignora ambas. Con MySQL (etapa 9) y una intercalación `_ai_ci`, la búsqueda ignora tildes y mayúsculas.
+- `?search=` no busca en la categoría, porque se guarda como clave (`formative`); la categoría se filtra con `?categoria=`.
+- Los pasos no se pueden crear ni editar por la API.
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0008_innovacion.py` | `feat: agrega modelo Innovacion` |
+| 2 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0009_pasoinnovacion.py` | `feat: agrega modelo PasoInnovacion para los pasos de implementación` |
+| 3 | `reflexIA_App/admin.py` | `feat: registra Innovacion en el admin con sus pasos en línea` |
+| 4 | `reflexIA_App/serializers.py` | `feat: agrega InnovacionSerializer con pasos anidados y etiquetas como lista` |
+| 5 | `reflexIA_App/views.py` | `feat: agrega InnovacionViewSet` |
+| 6 | `reflexIA_App/urls.py` | `feat: expone /api/innovaciones/ en el router` |
+| 7 | `reflexIA_App/views.py` | `feat: filtra innovaciones por categoría, publicación y texto` |
+| 8 | `reflexIA_App/fixtures/innovaciones.json` | `feat: agrega fixture con los casos de ejemplo de la biblioteca` |
+| 9 | `reflexIA_App/tests.py` | `test: agrega pruebas para la etapa 8 (innovaciones)` |
+| 10 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 8 (innovaciones)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate` y `python manage.py loaddata innovaciones`.
+2. En `/admin/` → **Innovaciones**: comprobar que aparecen los 5 casos, crear uno con 3 pasos y comprobar que como autor solo se ofrecen profesores y administradores, y que dos pasos con el mismo orden se rechazan.
+3. En `/api/innovaciones/`: listar, crear (POST) con `etiquetas` como lista, y comprobar que un estudiante como autor se rechaza.
+4. Probar `?categoria=teaching`, `?publicada=false`, `?search=coevaluación` y `?search=rutina&categoria=teaching`; `?categoria=otra` debe responder `400`.
+5. En `/api/innovaciones/<id>/`: publicarla (PATCH con `"publicada": true`) y eliminarla (DELETE); sus pasos también se eliminan.
+6. `python manage.py test`: deben pasar las 22 pruebas.
+
 ## Recursos previstos
 
 Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombres y campos son una propuesta; se confirman al empezar cada etapa.
@@ -352,9 +421,9 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 | 3 ✅ | `PreguntaTeorica` y `Alternativa` | HU-04 Marco teórico | Pregunta: `enunciado`, `activa`. Alternativa: `pregunta` (FK), `texto`, `es_correcta` | `/api/preguntas/` |
 | 4 ✅ | `IntentoCuestionario` | HU-04 | `estudiante` (FK), `respuestas_correctas`, `nota`, `aprobado`, `fecha` | `/api/intentos-cuestionario/` |
 | 5 ✅ | `Reflexion` | HU-03 Incidentes críticos | `estudiante` (FK), `taller` (FK), `contexto`, `descripcion`, `actores`, `relevancia`, `estado` (borrador, enviada, revisada), `intentos_usados`, `fecha_creacion`, `fecha_actualizacion` | `/api/reflexiones/` |
-| 6 | `Retroalimentacion` | HU-02 El Impulso | `reflexion` (FK), `propuesta_ia`, `comentario_docente`, `estado` (pendiente, editada, validada) | `/api/retroalimentaciones/` |
-| 7 | `Evaluacion` | HU-02, panel docente | `estudiante` (FK), `taller` (FK), `nota` (1,0 a 7,0), `resultado` (aprobado, reprobado), `fecha` | `/api/evaluaciones/` |
-| 8 | `Innovacion` | HU-07 Biblioteca | `titulo`, `categoria`, `descripcion`, `autor` (FK), `publicada` | `/api/innovaciones/` |
+| 6 ✅ | `Retroalimentacion` | HU-02 El Impulso | `reflexion` (FK), `propuesta_ia`, `comentario_docente`, `estado` (pendiente, editada, validada) | `/api/retroalimentaciones/` |
+| 7 ✅ | `Evaluacion` | HU-02, panel docente | `estudiante` (FK), `taller` (FK), `nota` (1,0 a 7,0), `resultado` (aprobado, reprobado), `fecha` | `/api/evaluaciones/` |
+| 8 | `Innovacion` y `PasoInnovacion` | HU-07 Biblioteca | Innovación: `titulo`, `categoria`, `resumen`, `contexto`, `desafio`, `actuacion`, `impacto_esperado`, `etiquetas`, `autor` (FK), `publicada`. Paso: `innovacion` (FK), `orden`, `texto` | `/api/innovaciones/` |
 
 El orden importa: los modelos con llaves foráneas (FK) van después de los modelos a los que apuntan.
 

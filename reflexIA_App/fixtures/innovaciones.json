@@ -1,0 +1,112 @@
+[
+  {
+    "model": "reflexIA_App.innovacion",
+    "pk": 1,
+    "fields": {
+      "titulo": "Estaciones de aprendizaje con roles rotativos",
+      "categoria": "teaching",
+      "resumen": "Organiza una secuencia de actividades breves para que el curso explore un mismo objetivo desde distintas formas de trabajo.",
+      "contexto": "Cursos que requieren alternar momentos de exploración, práctica y conversación.",
+      "desafio": "Una actividad única y extensa dificulta sostener la participación y atender diferentes ritmos de aprendizaje.",
+      "actuacion": "Diseñar estaciones complementarias con consignas breves y asignar roles que roten durante la sesión.",
+      "impacto_esperado": "Se espera favorecer la participación activa, la colaboración y distintas oportunidades de practicar el objetivo.",
+      "etiquetas": "participación, colaboración, diferenciación",
+      "autor": null,
+      "publicada": true,
+      "fecha_creacion": "2026-11-10T12:00:00Z",
+      "fecha_actualizacion": "2026-11-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "reflexIA_App.innovacion",
+    "pk": 2,
+    "fields": {
+      "titulo": "Retroalimentación entre pares con pauta breve",
+      "categoria": "formative",
+      "resumen": "Propone usar criterios explícitos para que cada estudiante entregue una sugerencia concreta sobre el trabajo de otra persona.",
+      "contexto": "Procesos de escritura, resolución de problemas o elaboración de productos revisables.",
+      "desafio": "La revisión suele llegar tarde o centrarse en impresiones generales que no orientan el siguiente paso.",
+      "actuacion": "Incorporar una pausa de revisión por pares con criterios observables y una pregunta de mejora.",
+      "impacto_esperado": "Se espera que el alumnado comprenda mejor los criterios y cuente con información oportuna para revisar su trabajo.",
+      "etiquetas": "coevaluación, criterios, escritura",
+      "autor": null,
+      "publicada": true,
+      "fecha_creacion": "2026-11-10T12:00:00Z",
+      "fecha_actualizacion": "2026-11-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "reflexIA_App.innovacion",
+    "pk": 3,
+    "fields": {
+      "titulo": "Opciones diversas para demostrar lo aprendido",
+      "categoria": "inclusion",
+      "resumen": "Ofrece más de un formato para comunicar el aprendizaje, manteniendo los mismos objetivos y criterios de evaluación.",
+      "contexto": "Unidades en las que el objetivo puede evidenciarse mediante una explicación, representación o producto.",
+      "desafio": "Un único formato de respuesta puede medir la facilidad con ese formato además del aprendizaje esperado.",
+      "actuacion": "Permitir elegir entre alternativas equivalentes y transparentar qué evidencia debe contener cada una.",
+      "impacto_esperado": "Se espera ampliar las vías de participación sin reducir la claridad ni la exigencia del objetivo común.",
+      "etiquetas": "accesibilidad, elección, evaluación",
+      "autor": null,
+      "publicada": true,
+      "fecha_creacion": "2026-11-10T12:00:00Z",
+      "fecha_actualizacion": "2026-11-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "reflexIA_App.innovacion",
+    "pk": 4,
+    "fields": {
+      "titulo": "Desafío de aprendizaje conectado con el entorno",
+      "categoria": "community",
+      "resumen": "Conecta un objetivo curricular con una pregunta sobre el entorno cotidiano, sin exponer información personal de la comunidad.",
+      "contexto": "Unidades que permiten observar, comparar o proponer mejoras a partir de situaciones cercanas.",
+      "desafio": "Algunos contenidos pueden percibirse como lejanos cuando se trabajan solo con ejemplos descontextualizados.",
+      "actuacion": "Plantear una pregunta investigable y analizar información general o materiales preparados por el docente.",
+      "impacto_esperado": "Se espera facilitar la transferencia de conceptos y dar propósito a la indagación mediante una situación reconocible.",
+      "etiquetas": "contextualización, indagación, ciudadanía",
+      "autor": null,
+      "publicada": true,
+      "fecha_creacion": "2026-11-10T12:00:00Z",
+      "fecha_actualizacion": "2026-11-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "reflexIA_App.innovacion",
+    "pk": 5,
+    "fields": {
+      "titulo": "Rutina de pensamiento para abrir y cerrar la clase",
+      "categoria": "teaching",
+      "resumen": "Usa preguntas recurrentes para hacer visibles las ideas iniciales y las conexiones que surgen durante una sesión.",
+      "contexto": "Clases con discusión, análisis de fuentes o construcción gradual de conceptos.",
+      "desafio": "Las ideas previas y los cambios de comprensión pueden quedar implícitos si solo se solicita una respuesta final.",
+      "actuacion": "Registrar una idea inicial, una pregunta y una conclusión al cierre para comparar el recorrido de pensamiento.",
+      "impacto_esperado": "Se espera fortalecer la metacognición y ayudar al docente a identificar preguntas o conceptos que requieren seguimiento.",
+      "etiquetas": "metacognición, diálogo, ideas previas",
+      "autor": null,
+      "publicada": true,
+      "fecha_creacion": "2026-11-10T12:00:00Z",
+      "fecha_actualizacion": "2026-11-10T12:00:00Z"
+    }
+  },
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 1, "fields": {"innovacion": 1, "orden": 1, "texto": "Definir un objetivo de aprendizaje común y dividirlo en tareas breves."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 2, "fields": {"innovacion": 1, "orden": 2, "texto": "Preparar instrucciones visibles y materiales accesibles en cada estación."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 3, "fields": {"innovacion": 1, "orden": 3, "texto": "Rotar roles como lector, encargado de materiales y relator para distribuir la participación."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 4, "fields": {"innovacion": 1, "orden": 4, "texto": "Cerrar con una síntesis en la que el grupo conecte lo trabajado en las distintas estaciones."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 5, "fields": {"innovacion": 2, "orden": 1, "texto": "Compartir dos o tres criterios vinculados directamente con el objetivo."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 6, "fields": {"innovacion": 2, "orden": 2, "texto": "Modelar una sugerencia respetuosa que señale un avance y un próximo paso."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 7, "fields": {"innovacion": 2, "orden": 3, "texto": "Intercambiar trabajos y responder la pauta usando ejemplos del producto."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 8, "fields": {"innovacion": 2, "orden": 4, "texto": "Reservar tiempo para que cada autor decida cómo utilizar la retroalimentación."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 9, "fields": {"innovacion": 3, "orden": 1, "texto": "Precisar el aprendizaje que se evaluará antes de escoger los formatos."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 10, "fields": {"innovacion": 3, "orden": 2, "texto": "Proponer opciones comparables, por ejemplo, una explicación oral, un esquema comentado o un texto breve."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 11, "fields": {"innovacion": 3, "orden": 3, "texto": "Usar una pauta común que valore las mismas ideas centrales en cada formato."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 12, "fields": {"innovacion": 3, "orden": 4, "texto": "Invitar a revisar la pauta antes de elegir y durante la preparación del producto."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 13, "fields": {"innovacion": 4, "orden": 1, "texto": "Seleccionar una pregunta conectada con el objetivo curricular y apropiada para la edad."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 14, "fields": {"innovacion": 4, "orden": 2, "texto": "Usar datos públicos, ficticios o previamente anonimizados; no recopilar datos identificables."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 15, "fields": {"innovacion": 4, "orden": 3, "texto": "Guiar la interpretación con preguntas que relacionen evidencia y contenido."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 16, "fields": {"innovacion": 4, "orden": 4, "texto": "Compartir conclusiones o propuestas en un formato breve acordado con el curso."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 17, "fields": {"innovacion": 5, "orden": 1, "texto": "Presentar un estímulo breve relacionado con el contenido."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 18, "fields": {"innovacion": 5, "orden": 2, "texto": "Pedir una respuesta inicial individual antes de conversar en grupo."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 19, "fields": {"innovacion": 5, "orden": 3, "texto": "Recoger preguntas y retomarlas mientras avanza la actividad."}},
+  {"model": "reflexIA_App.pasoinnovacion", "pk": 20, "fields": {"innovacion": 5, "orden": 4, "texto": "Al cierre, invitar a reformular la idea inicial y explicar qué evidencia produjo el cambio."}}
+]

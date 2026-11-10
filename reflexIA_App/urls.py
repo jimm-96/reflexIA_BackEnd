@@ -11,6 +11,7 @@ router.register(r'intentos-cuestionario', views.IntentoCuestionarioViewSet)
 router.register(r'reflexiones', views.ReflexionViewSet)
 router.register(r'retroalimentaciones', views.RetroalimentacionViewSet)
 router.register(r'evaluaciones', views.EvaluacionViewSet)
+router.register(r'innovaciones', views.InnovacionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

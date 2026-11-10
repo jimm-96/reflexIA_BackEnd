@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 7 de 8, evaluaciones. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 8 de 8, innovaciones. Los ocho recursos de la API están completos; las etapas siguientes cambian la base de datos y preparan la integración. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -33,7 +33,9 @@ reflexIA_BackEnd/
 │   ├── serializers.py    # Conversión de modelos a JSON
 │   ├── views.py          # ViewSets de la API
 │   ├── urls.py           # Router de DRF con los recursos
-│   └── admin.py          # Registro de modelos en el panel de administración
+│   ├── admin.py          # Registro de modelos en el panel de administración
+│   ├── tests.py          # Pruebas automáticas
+│   └── fixtures/         # Datos de ejemplo (casos de la biblioteca de innovaciones)
 ├── docs/                 # Documentación
 ├── manage.py
 └── requirements.txt
@@ -87,6 +89,17 @@ python manage.py runserver
 |---|---|
 | `http://127.0.0.1:8000/admin/` | Panel de administración de Django |
 | `http://127.0.0.1:8000/api/` | Raíz de la API (interfaz navegable de DRF) |
+
+### 7. (Opcional) Cargar los casos de ejemplo de la biblioteca
+```bash
+python manage.py loaddata innovaciones
+```
+Carga los 5 casos ilustrativos del frontend con sus pasos. Usa los ids 1 a 5 de innovaciones y 1 a 20 de pasos: si ya existen, los sobrescribe.
+
+### 8. Ejecutar las pruebas
+```bash
+python manage.py test
+```
 
 ---
 
@@ -272,6 +285,42 @@ Nota y resultado oficial de un estudiante en un taller (HU-02, panel docente).
 * **Valores permitidos:** `resultado` = `approved` (aprobado) o `failed` (reprobado).
 * **Validaciones:** el estudiante debe tener rol `student`; la nota va de 1.0 a 7.0, con un decimal; existe una sola evaluación por estudiante y taller. La regla que deriva el resultado a partir de la nota se incorporará en la etapa 11.
 
+### 8. Recurso: Innovaciones (`/api/innovaciones/`)
+
+Biblioteca de actuaciones mejoradas e innovaciones pedagógicas, cada una con sus pasos de implementación (HU-07).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/innovaciones/` | Lista las innovaciones, por categoría y título |
+| GET | `/api/innovaciones/?categoria=formative` | Filtra por categoría |
+| GET | `/api/innovaciones/?publicada=true` | Filtra por estado de publicación (`true` o `false`) |
+| GET | `/api/innovaciones/?search=coevaluación` | Busca en título, resumen, contexto y etiquetas |
+| POST | `/api/innovaciones/` | Crea una innovación |
+| GET | `/api/innovaciones/<id>/` | Muestra una innovación con sus pasos |
+| PUT / PATCH | `/api/innovaciones/<id>/` | Modifica una innovación (por ejemplo, la publica) |
+| DELETE | `/api/innovaciones/<id>/` | Elimina una innovación junto con sus pasos |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "titulo": "Retroalimentación entre pares con pauta breve",
+    "categoria": "formative",
+    "resumen": "Propone usar criterios explícitos para que cada estudiante entregue una sugerencia concreta.",
+    "contexto": "Procesos de escritura, resolución de problemas o elaboración de productos revisables.",
+    "desafio": "La revisión suele llegar tarde o centrarse en impresiones generales.",
+    "actuacion": "Incorporar una pausa de revisión por pares con criterios observables.",
+    "impacto_esperado": "Se espera que el alumnado comprenda mejor los criterios.",
+    "etiquetas": ["coevaluación", "criterios", "escritura"],
+    "autor": 2,
+    "publicada": true
+  }
+  ```
+* **Respuesta:** incluye además `pasos` (lista con `id`, `orden` y `texto`), `correo_autor`, `fecha_creacion` y `fecha_actualizacion`, que son de solo lectura.
+* **Valores permitidos:** `categoria` = `teaching` (Estrategias de enseñanza), `formative` (Evaluación formativa), `inclusion` (Inclusión y participación) o `community` (Vinculación con el entorno).
+* **Opcionales:** `etiquetas` (por defecto lista vacía), `autor` (por defecto sin autor) y `publicada` (por defecto `false`).
+* **Validaciones:** `autor` es el id de un usuario autorizado con rol `teacher` o `admin`; `etiquetas` es una lista de textos sin comas; un filtro `?categoria=` o `?publicada=` con un valor no permitido responde `400 Bad Request`.
+* **Pasos:** por ahora se cargan desde el panel de administración, en la misma pantalla de la innovación. En la API son de solo lectura.
+
 ---
 
 ## Flujo de trabajo incremental
@@ -293,5 +342,6 @@ Dentro de cada rama, el recurso se agrega en commits pequeños, con este orden:
 3. Serializer en `serializers.py`.
 4. ViewSet en `views.py`.
 5. Ruta en `urls.py` y prueba en `/api/`.
+6. Pruebas en `tests.py` (`python manage.py test`).
 
 El detalle de cada etapa y los mensajes de commit sugeridos están en [docs/plan-incremental.md](./docs/plan-incremental.md).
