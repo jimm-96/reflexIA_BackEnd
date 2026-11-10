@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Alternativa,
+    Evaluacion,
     IntentoCuestionario,
     PreguntaTeorica,
     Reflexion,
@@ -70,3 +71,12 @@ class RetroalimentacionAdmin(admin.ModelAdmin):
     list_filter = ('estado',)
     search_fields = ('reflexion__estudiante__correo', 'reflexion__taller__titulo')
     list_select_related = ('reflexion', 'reflexion__estudiante', 'reflexion__taller')
+
+
+@admin.register(Evaluacion)
+class EvaluacionAdmin(admin.ModelAdmin):
+    list_display = ('estudiante', 'taller', 'nota', 'resultado', 'fecha')
+    list_filter = ('resultado', 'taller')
+    search_fields = ('estudiante__correo', 'estudiante__nombre', 'taller__titulo')
+    readonly_fields = ('fecha',)
+    list_select_related = ('estudiante', 'taller')
