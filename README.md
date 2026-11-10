@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 6 de 8, retroalimentaciones. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 7 de 8, evaluaciones. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -246,6 +246,31 @@ Propuesta de la IA y comentario docente asociados a una reflexión (HU-02).
 * **Valores permitidos:** `estado` = `pending` (pendiente), `edited` (editada) o `validated` (validada).
 * **Opcionales:** `comentario_docente` (por defecto vacío) y `estado` (por defecto `pending`).
 * **Validaciones:** `reflexion` debe ser el id de una reflexión existente. La propuesta de IA es obligatoria.
+
+### 7. Recurso: Evaluaciones (`/api/evaluaciones/`)
+
+Nota y resultado oficial de un estudiante en un taller (HU-02, panel docente).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/evaluaciones/` | Lista las evaluaciones |
+| POST | `/api/evaluaciones/` | Registra una evaluación |
+| GET | `/api/evaluaciones/<id>/` | Muestra una evaluación |
+| PUT / PATCH | `/api/evaluaciones/<id>/` | Modifica la nota o el resultado |
+| DELETE | `/api/evaluaciones/<id>/` | Elimina una evaluación |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "estudiante": 1,
+    "taller": 1,
+    "nota": 6.0,
+    "resultado": "approved"
+  }
+  ```
+* **Respuesta:** incluye `correo_estudiante`, `numero_taller` y `fecha`; son de solo lectura.
+* **Valores permitidos:** `resultado` = `approved` (aprobado) o `failed` (reprobado).
+* **Validaciones:** el estudiante debe tener rol `student`; la nota va de 1.0 a 7.0, con un decimal; existe una sola evaluación por estudiante y taller. La regla que deriva el resultado a partir de la nota se incorporará en la etapa 11.
 
 ---
 

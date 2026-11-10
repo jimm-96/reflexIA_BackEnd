@@ -34,8 +34,8 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 3 | `recurso-preguntas` (PR #3, integrado) |
 | 4 | `recurso-intentos-cuestionario` (PR #4, integrado) |
 | 5 | `recurso-reflexiones` |
-| 6 | `recurso-retroalimentaciones` (en integración) |
-| 7 | `recurso-evaluaciones` |
+| 6 | `recurso-retroalimentaciones` (PR #6, integrado) |
+| 7 | `recurso-evaluaciones` (en integración) |
 | 8 | `recurso-innovaciones` |
 | 9 | `config-mysql` |
 
@@ -269,7 +269,7 @@ Cómo probarla:
 3. En `/admin/` → **Reflexiones**: crear una reflexión con solo el contexto (se acepta como borrador), comprobar que la lista de estudiantes no incluye al profesor, y que se rechazan una segunda reflexión del mismo estudiante en el mismo taller y 4 intentos usados.
 4. En `/api/reflexiones/`: crear una reflexión en el otro taller (POST) y comprobar que el duplicado se rechaza. En `/api/reflexiones/<id>/`: enviarla (PATCH con `"estado": "submitted"` e `"intentos_usados": 1`), comprobar que cambia `fecha_actualizacion`, y eliminarla (DELETE).
 
-## Etapa 6: retroalimentaciones (HU-02) ⏳
+## Etapa 6: retroalimentaciones (HU-02) ✅
 
 Rama: `recurso-retroalimentaciones`.
 
@@ -303,6 +303,43 @@ Cómo probarla:
 2. En `/admin/` → **Retroalimentaciones**: asociar una propuesta a una reflexión y comprobar los filtros por estado.
 3. En `/api/retroalimentaciones/`: listar y crear (POST) una retroalimentación vinculada a una reflexión existente.
 4. En `/api/retroalimentaciones/<id>/`: cambiar el comentario o estado (PATCH) y eliminar (DELETE). Comprobar que una reflexión inexistente se rechaza.
+
+## Etapa 7: evaluaciones (HU-02, panel docente) ⏳
+
+Rama: `recurso-evaluaciones`.
+
+Modelo `Evaluacion`: registra la nota y el resultado que el profesor guía asigna a un estudiante en cada taller.
+
+| Campo | Tipo | Detalle |
+|---|---|---|
+| `estudiante` | `ForeignKey` a `UsuarioAutorizado` | Solo usuarios con rol `student` (`limit_choices_to`). `on_delete=CASCADE`. `related_name='evaluaciones'`. |
+| `taller` | `ForeignKey` a `Taller` | `on_delete=CASCADE`: al eliminar el taller se eliminan sus evaluaciones. `related_name='evaluaciones'`. |
+| `nota` | `DecimalField` | De 1.0 a 7.0, con un decimal. |
+| `resultado` | `CharField` con opciones | `approved` (Aprobado) o `failed` (Reprobado), igual que `WorkshopOutcome` del frontend. |
+| `fecha` | `DateTimeField` | Se llena sola al crear; solo lectura. |
+
+Decisiones:
+
+- Se guarda una sola evaluación por estudiante y taller (`UniqueConstraint`): al modificar la nota se actualiza la evaluación del taller sin duplicarla.
+- El estudiante y el taller se envían por id; la respuesta agrega `correo_estudiante` y `numero_taller` (solo lectura).
+- Los valores de `resultado` coinciden con el frontend; las etiquetas se muestran en español.
+- La regla de negocio que determina `approved` desde una nota de 4.0 o superior se aplicará en la etapa 11.
+
+| # | Archivos | Mensaje sugerido |
+|---|---|---|
+| 1 | `reflexIA_App/models.py`, `reflexIA_App/migrations/0007_evaluacion.py` | `feat: agrega modelo Evaluacion` |
+| 2 | `reflexIA_App/admin.py` | `feat: registra Evaluacion en el admin` |
+| 3 | `reflexIA_App/serializers.py` | `feat: agrega EvaluacionSerializer` |
+| 4 | `reflexIA_App/views.py` | `feat: agrega EvaluacionViewSet` |
+| 5 | `reflexIA_App/urls.py` | `feat: expone /api/evaluaciones/ en el router` |
+| 6 | `README.md`, `docs/plan-incremental.md` | `docs: documenta etapa 7 (evaluaciones)` |
+
+Cómo probarla:
+
+1. `python manage.py migrate`.
+2. En `/admin/` → **Evaluaciones**: registrar una nota para un estudiante y un taller; comprobar que no se ofrecen usuarios con otro rol y que la fecha es de solo lectura.
+3. En `/api/evaluaciones/`: listar y crear (POST) una evaluación, comprobando la respuesta con correo y número de taller.
+4. Probar notas fuera del rango, ids inválidos y una segunda evaluación para el mismo estudiante y taller; deben rechazarse. En `/api/evaluaciones/<id>/`: editar (PATCH) y eliminar (DELETE).
 
 ## Recursos previstos
 
