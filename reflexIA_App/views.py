@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 
 from .models import (
+    Evaluacion,
     IntentoCuestionario,
     PreguntaTeorica,
     Reflexion,
@@ -9,6 +10,7 @@ from .models import (
     UsuarioAutorizado,
 )
 from .serializers import (
+    EvaluacionSerializer,
     IntentoCuestionarioSerializer,
     PreguntaTeoricaSerializer,
     ReflexionSerializer,
@@ -56,3 +58,8 @@ class RetroalimentacionViewSet(viewsets.ModelViewSet):
         'reflexion__taller',
     )
     serializer_class = RetroalimentacionSerializer
+
+
+class EvaluacionViewSet(viewsets.ModelViewSet):
+    queryset = Evaluacion.objects.select_related('estudiante', 'taller')
+    serializer_class = EvaluacionSerializer
