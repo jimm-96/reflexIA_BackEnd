@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 4 de 8, intentos de cuestionario. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 5 de 8, reflexiones. Los demás modelos se agregan por etapas. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -192,6 +192,34 @@ Cada vez que un estudiante rinde el cuestionario del marco teórico, con su resu
 * **Respuesta:** incluye además `correo_estudiante` y `fecha`, que son de solo lectura. La fecha se llena sola al crear el intento.
 * **Opcionales:** `aprobado` (por defecto `false`).
 * **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `respuestas_correctas` va de 0 a 10; `nota` va de 1.0 a 7.0, con un decimal. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+
+### 5. Recurso: Reflexiones (`/api/reflexiones/`)
+
+El análisis de un incidente crítico que cada estudiante escribe en un taller, en cuatro partes (HU-03).
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api/reflexiones/` | Lista las reflexiones, por estudiante y número de taller |
+| POST | `/api/reflexiones/` | Crea una reflexión (por ejemplo, un borrador) |
+| GET | `/api/reflexiones/<id>/` | Muestra una reflexión |
+| PUT / PATCH | `/api/reflexiones/<id>/` | Modifica una reflexión (por ejemplo, la envía) |
+| DELETE | `/api/reflexiones/<id>/` | Elimina una reflexión |
+
+* **Payload esperado (JSON):**
+  ```json
+  {
+    "estudiante": 1,
+    "taller": 1,
+    "contexto": "Curso de 30 estudiantes de segundo básico, sala con proyector.",
+    "descripcion": "Durante una actividad grupal, un estudiante se negó a participar.",
+    "actores": "La docente en formación, el estudiante y su grupo.",
+    "relevancia": "Muestra la importancia de anticipar la dinámica de los grupos."
+  }
+  ```
+* **Respuesta:** incluye además `correo_estudiante`, `numero_taller`, `fecha_creacion` y `fecha_actualizacion`, que son de solo lectura. `fecha_actualizacion` cambia cada vez que se guarda.
+* **Valores permitidos:** `estado` = `draft` (borrador), `submitted` (enviada) o `reviewed` (revisada).
+* **Opcionales:** los cuatro textos (por defecto vacíos, para guardar borradores incompletos), `estado` (por defecto `draft`) e `intentos_usados` (por defecto 0).
+* **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `taller` es el id de un taller existente; `intentos_usados` va de 0 a 3; un estudiante tiene una sola reflexión por taller. Si no se cumple, la API responde `400 Bad Request` con el motivo.
 
 ---
 

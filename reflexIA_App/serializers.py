@@ -5,6 +5,7 @@ from .models import (
     Alternativa,
     IntentoCuestionario,
     PreguntaTeorica,
+    Reflexion,
     Taller,
     UsuarioAutorizado,
     validar_correo_institucional,
@@ -79,6 +80,46 @@ class IntentoCuestionarioSerializer(serializers.ModelSerializer):
             'estudiante': {
                 'error_messages': {
                     'does_not_exist': 'No existe un estudiante con id {pk_value}.',
+                },
+            },
+        }
+
+
+class ReflexionSerializer(serializers.ModelSerializer):
+    # El estudiante y el taller se reciben por su id; la respuesta agrega
+    # el correo y el número para leerla sin buscar los ids.
+    correo_estudiante = serializers.EmailField(source='estudiante.correo', read_only=True)
+    numero_taller = serializers.IntegerField(source='taller.numero', read_only=True)
+
+    class Meta:
+        model = Reflexion
+        fields = (
+            'id',
+            'estudiante',
+            'correo_estudiante',
+            'taller',
+            'numero_taller',
+            'contexto',
+            'descripcion',
+            'actores',
+            'relevancia',
+            'estado',
+            'intentos_usados',
+            'fecha_creacion',
+            'fecha_actualizacion',
+        )
+        read_only_fields = ('fecha_creacion', 'fecha_actualizacion')
+        extra_kwargs = {
+            # Igual que en los intentos: un profesor existe, pero no puede
+            # tener reflexiones.
+            'estudiante': {
+                'error_messages': {
+                    'does_not_exist': 'No existe un estudiante con id {pk_value}.',
+                },
+            },
+            'taller': {
+                'error_messages': {
+                    'does_not_exist': 'No existe un taller con id {pk_value}.',
                 },
             },
         }

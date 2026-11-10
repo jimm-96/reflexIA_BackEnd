@@ -1,9 +1,10 @@
 from rest_framework import viewsets
 
-from .models import IntentoCuestionario, PreguntaTeorica, Taller, UsuarioAutorizado
+from .models import IntentoCuestionario, PreguntaTeorica, Reflexion, Taller, UsuarioAutorizado
 from .serializers import (
     IntentoCuestionarioSerializer,
     PreguntaTeoricaSerializer,
+    ReflexionSerializer,
     TallerSerializer,
     UsuarioAutorizadoSerializer,
 )
@@ -31,3 +32,10 @@ class IntentoCuestionarioViewSet(viewsets.ModelViewSet):
     # consulta, porque la respuesta incluye su correo.
     queryset = IntentoCuestionario.objects.select_related('estudiante')
     serializer_class = IntentoCuestionarioSerializer
+
+
+class ReflexionViewSet(viewsets.ModelViewSet):
+    # select_related trae el estudiante y el taller de cada reflexión en
+    # la misma consulta, porque la respuesta incluye el correo y el número.
+    queryset = Reflexion.objects.select_related('estudiante', 'taller')
+    serializer_class = ReflexionSerializer
