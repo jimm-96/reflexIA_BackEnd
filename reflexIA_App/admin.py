@@ -5,6 +5,7 @@ from .models import (
     IntentoCuestionario,
     PreguntaTeorica,
     Reflexion,
+    Retroalimentacion,
     Taller,
     UsuarioAutorizado,
 )
@@ -61,3 +62,11 @@ class ReflexionAdmin(admin.ModelAdmin):
         ('Análisis del incidente', {'fields': ('contexto', 'descripcion', 'actores', 'relevancia')}),
         ('Fechas', {'fields': ('fecha_creacion', 'fecha_actualizacion')}),
     )
+
+
+@admin.register(Retroalimentacion)
+class RetroalimentacionAdmin(admin.ModelAdmin):
+    list_display = ('reflexion', 'estado')
+    list_filter = ('estado',)
+    search_fields = ('reflexion__estudiante__correo', 'reflexion__taller__titulo')
+    list_select_related = ('reflexion', 'reflexion__estudiante', 'reflexion__taller')
