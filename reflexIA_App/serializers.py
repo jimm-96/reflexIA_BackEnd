@@ -4,7 +4,9 @@ from rest_framework.validators import UniqueValidator
 from .models import (
     Alternativa,
     Evaluacion,
+    Innovacion,
     IntentoCuestionario,
+    PasoInnovacion,
     PreguntaTeorica,
     Reflexion,
     Retroalimentacion,
@@ -186,4 +188,68 @@ class EvaluacionSerializer(serializers.ModelSerializer):
                 },
             },
             'nota': {'coerce_to_string': False},
+        }
+
+
+class EtiquetasField(serializers.Field):
+    """
+    Las etiquetas se guardan separadas por coma, pero la API las entrega
+    y las recibe como lista, igual que `tags` en el frontend.
+    """
+
+    def to_representation(self, value):
+        return [etiqueta.strip() for etiqueta in value.split(',') if etiqueta.strip()]
+
+    def to_internal_value(self, data):
+        if not isinstance(data, list) or not all(isinstance(etiqueta, str) for etiqueta in data):
+            raise serializers.ValidationError('Debe ser una lista de textos.')
+        if any(',' in etiqueta for etiqueta in data):
+            raise serializers.ValidationError('Una etiqueta no puede contener comas.')
+        texto = ', '.join(etiqueta.strip() for etiqueta in data if etiqueta.strip())
+        if len(texto) > Innovacion._meta.get_field('etiquetas').max_length:
+            raise serializers.ValidationError('Las etiquetas superan el largo permitido.')
+        return texto
+
+
+class PasoInnovacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PasoInnovacion
+        fields = ('id', 'orden', 'texto')
+
+
+class InnovacionSerializer(serializers.ModelSerializer):
+    # Los pasos van dentro del mismo JSON. Son de solo lectura: por ahora
+    # se cargan desde el admin, igual que las alternativas.
+    pasos = PasoInnovacionSerializer(many=True, read_only=True)
+    etiquetas = EtiquetasField(required=False)
+    # default=None: el caso puede no tener autor (SET_NULL).
+    correo_autor = serializers.EmailField(source='autor.correo', read_only=True, default=None)
+
+    class Meta:
+        model = Innovacion
+        fields = (
+            'id',
+            'titulo',
+            'categoria',
+            'resumen',
+            'contexto',
+            'desafio',
+            'actuacion',
+            'pasos',
+            'impacto_esperado',
+            'etiquetas',
+            'autor',
+            'correo_autor',
+            'publicada',
+            'fecha_creacion',
+            'fecha_actualizacion',
+        )
+        read_only_fields = ('fecha_creacion', 'fecha_actualizacion')
+        extra_kwargs = {
+            # Un estudiante existe, pero no puede ser autor de un caso.
+            'autor': {
+                'error_messages': {
+                    'does_not_exist': 'No existe un profesor guía o administrador con id {pk_value}.',
+                },
+            },
         }
