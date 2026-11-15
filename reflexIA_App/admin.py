@@ -43,10 +43,24 @@ class PreguntaTeoricaAdmin(admin.ModelAdmin):
 
 @admin.register(IntentoCuestionario)
 class IntentoCuestionarioAdmin(admin.ModelAdmin):
-    list_display = ('estudiante', 'respuestas_correctas', 'nota', 'aprobado', 'fecha')
-    list_filter = ('aprobado',)
+    list_display = (
+        'estudiante',
+        'numero_intento',
+        'respuestas_correctas',
+        'nota',
+        'nota_maxima',
+        'aprobado',
+        'estado',
+        'fecha',
+    )
+    list_filter = ('aprobado', 'estado')
     search_fields = ('estudiante__correo', 'estudiante__nombre')
-    readonly_fields = ('fecha',)
+    readonly_fields = ('nota_maxima', 'fecha')
+
+    @admin.display(description='nota máxima')
+    def nota_maxima(self, obj):
+        # Tope del bloque del intento (DEC-15): se calcula, no se escribe.
+        return obj.nota_maxima
     # Trae el estudiante de cada intento en la misma consulta.
     list_select_related = ('estudiante',)
 
