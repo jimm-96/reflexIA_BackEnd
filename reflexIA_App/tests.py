@@ -7,10 +7,17 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from .admin import EvaluacionAdmin, InnovacionAdmin, PasoInnovacionInline, RetroalimentacionAdmin
+from .admin import (
+    EvaluacionAdmin,
+    InnovacionAdmin,
+    IntentoCuestionarioAdmin,
+    PasoInnovacionInline,
+    RetroalimentacionAdmin,
+)
 from .models import (
     Evaluacion,
     Innovacion,
+    IntentoCuestionario,
     PasoInnovacion,
     Reflexion,
     Retroalimentacion,
@@ -528,3 +535,132 @@ class EtapaOchoAdminTests(TestCase):
             [profesor, admin_reflexia],
         )
         self.assertNotIn('fecha_creacion', campos)
+
+
+# ─────────────────────────────────────────────
+# Intentos de cuestionario: sincronización con el frontend (DEC-15)
+# ─────────────────────────────────────────────
+
+
+class IntentoCuestionarioDec15TestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.estudiante = UsuarioAutorizado.objects.create(correo='intento@ucen.cl')
+        self.otro_estudiante = UsuarioAutorizado.objects.create(correo='otro-intento@ucen.cl')
+
+    def crear_intento(self, numero_intento, estudiante=None, **extra):
+        return IntentoCuestionario.objects.create(
+            estudiante=estudiante or self.estudiante,
+            numero_intento=numero_intento,
+            respuestas_correctas=8,
+            nota=Decimal('5.0'),
+            **extra,
+        )
+
+
+class IntentoCuestionarioModeloTests(IntentoCuestionarioDec15TestCase):
+    def test_nota_maxima_baja_por_bloques_de_tres_intentos(self):
+        topes = {
+            1: '7.0', 3: '7.0',
+            4: '5.0', 6: '5.0',
+            7: '4.0', 9: '4.0',
+        }
+        for numero, tope in topes.items():
+            with self.subTest(numero_intento=numero):
+                intento = IntentoCuestionario(numero_intento=numero)
+                self.assertEqual(intento.nota_maxima, Decimal(tope))
+
+    def test_estado_por_defecto_es_completado(self):
+        intento = self.crear_intento(1)
+
+        self.assertEqual(intento.estado, 'completed')
+
+    def test_rechaza_numero_fuera_de_rango_y_estado_en_curso(self):
+        for valores in ({'numero_intento': 0}, {'numero_intento': 10}, {'estado': 'in-progress'}):
+            with self.subTest(**valores):
+                intento = IntentoCuestionario(
+                    estudiante=self.estudiante,
+                    respuestas_correctas=8,
+                    nota=Decimal('5.0'),
+                    **{'numero_intento': 1, **valores},
+                )
+                with self.assertRaises(ValidationError):
+                    intento.full_clean()
+
+
+class IntentoCuestionarioApiDec15Tests(IntentoCuestionarioDec15TestCase):
+    endpoint = '/api/intentos-cuestionario/'
+
+    def crear_payload(self, **overrides):
+        payload = {
+            'estudiante': self.estudiante.pk,
+            'numero_intento': 4,
+            'respuestas_correctas': 9,
+            'nota': 5.0,
+            'aprobado': True,
+            'estado': 'timed-out',
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_crea_intento_con_numero_estado_y_nota_maxima(self):
+        response = self.client.post(self.endpoint, self.crear_payload(), format='json')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['numero_intento'], 4)
+        self.assertEqual(response.data['estado'], 'timed-out')
+        # La nota máxima sale como número, igual que `maxGrade` del frontend.
+        self.assertEqual(response.data['nota_maxima'], Decimal('5.0'))
+        self.assertNotIsInstance(response.data['nota_maxima'], str)
+
+    def test_nota_maxima_es_solo_lectura(self):
+        response = self.client.post(
+            self.endpoint,
+            self.crear_payload(numero_intento=1, nota_maxima=4.0),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['nota_maxima'], Decimal('7.0'))
+
+    def test_rechaza_numero_repetido_del_mismo_estudiante(self):
+        self.crear_intento(4)
+
+        response = self.client.post(self.endpoint, self.crear_payload(), format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('non_field_errors', response.data)
+
+    def test_otro_estudiante_puede_usar_el_mismo_numero(self):
+        self.crear_intento(4)
+
+        response = self.client.post(
+            self.endpoint,
+            self.crear_payload(estudiante=self.otro_estudiante.pk),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_rechaza_numero_fuera_de_rango_y_estado_invalido(self):
+        for invalido in ({'numero_intento': 0}, {'numero_intento': 10}, {'estado': 'in-progress'}):
+            with self.subTest(**invalido):
+                response = self.client.post(
+                    self.endpoint,
+                    self.crear_payload(**invalido),
+                    format='json',
+                )
+
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(invalido)), response.data)
+
+
+class IntentoCuestionarioAdminDec15Tests(TestCase):
+    def test_admin_muestra_numero_estado_y_nota_maxima(self):
+        intento_admin = admin.site._registry[IntentoCuestionario]
+
+        self.assertIsInstance(intento_admin, IntentoCuestionarioAdmin)
+        for campo in ('numero_intento', 'nota_maxima', 'estado'):
+            self.assertIn(campo, intento_admin.list_display)
+        self.assertIn('estado', intento_admin.list_filter)
+        self.assertIn('nota_maxima', intento_admin.readonly_fields)
