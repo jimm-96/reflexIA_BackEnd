@@ -197,14 +197,18 @@ Cada vez que un estudiante rinde el cuestionario del marco teórico, con su resu
   ```json
   {
     "estudiante": 1,
+    "numero_intento": 4,
     "respuestas_correctas": 9,
-    "nota": 6.6,
-    "aprobado": true
+    "nota": 5.0,
+    "aprobado": true,
+    "estado": "completed"
   }
   ```
-* **Respuesta:** incluye además `correo_estudiante` y `fecha`, que son de solo lectura. La fecha se llena sola al crear el intento.
-* **Opcionales:** `aprobado` (por defecto `false`).
-* **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `respuestas_correctas` va de 0 a 10; `nota` va de 1.0 a 7.0, con un decimal. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+* **Respuesta:** incluye además `correo_estudiante`, `nota_maxima` y `fecha`, que son de solo lectura. `nota_maxima` es la nota máxima del bloque del intento (DEC-15): 7.0 en los intentos 1 a 3, 5.0 en los 4 a 6 y 4.0 en los 7 a 9. La fecha se llena sola al crear el intento.
+* **Valores permitidos:** `estado` = `completed` (Completado) o `timed-out` (Tiempo agotado), los mismos del frontend.
+* **Opcionales:** `aprobado` (por defecto `false`) y `estado` (por defecto `completed`).
+* **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `numero_intento` va de 1 a 9 y no se repite para un mismo estudiante; `respuestas_correctas` va de 0 a 10; `nota` va de 1.0 a 7.0, con un decimal. Si no se cumple, la API responde `400 Bad Request` con el motivo.
+* **Pendiente (etapa 11):** por ahora la nota y `aprobado` los envía quien registra el intento. El cálculo en el servidor y el rechazo de intentos después de aprobar o de usar los 9 se agregan en la etapa 11.
 
 ### 5. Recurso: Reflexiones (`/api/reflexiones/`)
 

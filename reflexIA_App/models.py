@@ -157,8 +157,9 @@ class IntentoCuestionario(models.Model):
     Un intento de un estudiante en el cuestionario del marco teórico (HU-04).
 
     Equivale a `QuizAttempt` del frontend (src/models/theoryQuiz.ts).
-    Por ahora solo guarda el resultado; las reglas de aprobación y de
-    intentos por bloques se aplican en una etapa posterior.
+    Guarda el resultado, el número de intento y si se agotó el tiempo.
+    Las reglas que calculan la nota y rechazan intentos (DEC-15) se aplican
+    en una etapa posterior.
     """
 
     # Cada intento tiene 10 preguntas sacadas del banco (RF-04).
@@ -166,6 +167,18 @@ class IntentoCuestionario(models.Model):
     # Escala de notas chilena.
     NOTA_MINIMA = Decimal('1.0')
     NOTA_MAXIMA = Decimal('7.0')
+    # DEC-15: máximo 9 intentos en 3 bloques de 3. La nota máxima de cada
+    # bloque es 7.0 (intentos 1 a 3), 5.0 (4 a 6) y 4.0 (7 a 9).
+    MAXIMO_INTENTOS = 9
+    INTENTOS_POR_BLOQUE = 3
+    TOPES_POR_BLOQUE = (Decimal('7.0'), Decimal('5.0'), Decimal('4.0'))
+
+    # Mismos valores que `AttemptStatus` del frontend. 'in-progress' no se
+    # guarda: el intento se registra recién cuando el estudiante lo envía.
+    ESTADO_CHOICES = [
+        ('completed', 'Completado'),
+        ('timed-out', 'Tiempo agotado'),
+    ]
 
     estudiante = models.ForeignKey(
         UsuarioAutorizado,
@@ -173,6 +186,10 @@ class IntentoCuestionario(models.Model):
         related_name='intentos_cuestionario',
         # Solo los estudiantes rinden el cuestionario.
         limit_choices_to={'rol': 'student'},
+    )
+    numero_intento = models.PositiveSmallIntegerField(
+        'número de intento',
+        validators=[MinValueValidator(1), MaxValueValidator(MAXIMO_INTENTOS)],
     )
     respuestas_correctas = models.PositiveSmallIntegerField(
         'respuestas correctas',
@@ -184,16 +201,33 @@ class IntentoCuestionario(models.Model):
         validators=[MinValueValidator(NOTA_MINIMA), MaxValueValidator(NOTA_MAXIMA)],
     )
     aprobado = models.BooleanField(default=False)
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='completed')
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'intento de cuestionario'
         verbose_name_plural = 'intentos de cuestionario'
         ordering = ['-fecha']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['estudiante', 'numero_intento'],
+                name='intento_unico_por_numero',
+                violation_error_message='Este estudiante ya tiene un intento con ese número.',
+            ),
+        ]
+
+    @property
+    def nota_maxima(self):
+        """Nota máxima que se podía obtener en este intento (DEC-15)."""
+        if self.numero_intento is None:
+            return None
+        bloque = (self.numero_intento - 1) // self.INTENTOS_POR_BLOQUE
+        # Si el número viniera fuera de rango, rige el último tope.
+        return self.TOPES_POR_BLOQUE[min(bloque, len(self.TOPES_POR_BLOQUE) - 1)]
 
     def __str__(self):
         return (
-            f'{self.estudiante.correo}: '
+            f'{self.estudiante.correo}, intento {self.numero_intento}: '
             f'{self.respuestas_correctas}/{self.PREGUNTAS_POR_INTENTO}, nota {self.nota}'
         )
 

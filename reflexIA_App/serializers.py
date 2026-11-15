@@ -62,6 +62,14 @@ class IntentoCuestionarioSerializer(serializers.ModelSerializer):
     # El estudiante se recibe por su id; el correo se agrega en la
     # respuesta para que se lea quién rindió sin buscar el id.
     correo_estudiante = serializers.EmailField(source='estudiante.correo', read_only=True)
+    # Tope de nota del bloque del intento (DEC-15). Se calcula a partir de
+    # `numero_intento`; equivale a `maxGrade` del frontend.
+    nota_maxima = serializers.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        coerce_to_string=False,
+        read_only=True,
+    )
 
     class Meta:
         model = IntentoCuestionario
@@ -69,9 +77,12 @@ class IntentoCuestionarioSerializer(serializers.ModelSerializer):
             'id',
             'estudiante',
             'correo_estudiante',
+            'numero_intento',
             'respuestas_correctas',
             'nota',
+            'nota_maxima',
             'aprobado',
+            'estado',
             'fecha',
         )
         read_only_fields = ('fecha',)
