@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    # Tokens de acceso para la API (POST /api/auth/token/).
+    'rest_framework.authtoken',
     'reflexIA_App',
 ]
 
@@ -118,6 +120,31 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Django REST Framework: autenticación y permisos
+# https://www.django-rest-framework.org/api-guide/authentication/
+#
+# Autenticación: quién hace la petición.
+# - TokenAuthentication: encabezado "Authorization: Token <token>", que se
+#   obtiene en POST /api/auth/token/. Es la que usará el frontend.
+# - SessionAuthentication: la sesión de /admin/ o de /api-auth/login/, para
+#   probar la API navegable desde el navegador.
+# Va primero Token para que una petición sin credenciales reciba 401
+# (no autenticado) y no 403 (sin permiso).
+#
+# Permisos por defecto: toda la API exige un correo activo en la whitelist
+# (reflexIA_App/permissions.py). Cada ViewSet agrega además los roles que
+# pueden leer, crear y editar.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'reflexIA_App.permissions.EstaEnWhitelist',
+    ],
+}
 
 
 # Email
