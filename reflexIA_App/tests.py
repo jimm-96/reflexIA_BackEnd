@@ -26,9 +26,28 @@ from .models import (
 )
 
 
+def cliente_superusuario():
+    """
+    Cliente de la API autenticado como superusuario de Django.
+
+    Estas pruebas revisan datos y validaciones, no permisos: el superusuario
+    puede hacer todo. Los permisos por rol se prueban en tests_permisos.py.
+    """
+    superusuario = get_user_model().objects.create_superuser(
+        username='superusuario-pruebas',
+        email='superusuario@ejemplo.cl',
+        # Sin contraseña: force_authenticate no la necesita y así la prueba
+        # no gasta tiempo calculando su hash.
+        password=None,
+    )
+    cliente = APIClient()
+    cliente.force_authenticate(user=superusuario)
+    return cliente
+
+
 class EtapasSeisYSieteTestCase(TestCase):
     def setUp(self):
-        self.client = APIClient()
+        self.client = cliente_superusuario()
         self.estudiante = UsuarioAutorizado.objects.create(
             correo='estudiante@ucen.cl',
             nombre='Estudiante de prueba',
@@ -307,7 +326,7 @@ class EtapasSeisYSieteAdminTests(TestCase):
 
 class EtapaOchoTestCase(TestCase):
     def setUp(self):
-        self.client = APIClient()
+        self.client = cliente_superusuario()
         self.profesor = UsuarioAutorizado.objects.create(
             correo='profesor@ucen.cl',
             nombre='Profesor de prueba',
@@ -544,7 +563,7 @@ class EtapaOchoAdminTests(TestCase):
 
 class IntentoCuestionarioDec15TestCase(TestCase):
     def setUp(self):
-        self.client = APIClient()
+        self.client = cliente_superusuario()
         self.estudiante = UsuarioAutorizado.objects.create(correo='intento@ucen.cl')
         self.otro_estudiante = UsuarioAutorizado.objects.create(correo='otro-intento@ucen.cl')
 
