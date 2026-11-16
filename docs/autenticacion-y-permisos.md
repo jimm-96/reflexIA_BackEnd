@@ -1,6 +1,6 @@
 # Autenticación y permisos por rol
 
-Etapa 9 del [plan incremental](./plan-incremental.md). Rama: `feat/autenticacion-permisos`.
+Etapa 9 del [plan incremental](./plan-incremental.md). Rama: `autenticacion-permisos` (PR #13).
 
 ## Por qué
 
@@ -22,6 +22,8 @@ Cada petición pasa por tres controles, en orden:
 | 3 | **Rol**: el rol de la whitelist puede hacer esa acción en ese recurso (RN-02). | `403` "Tu rol no tiene permiso para realizar esta acción." | `PermisoPorRol` en `permissions.py` y los roles de cada ViewSet en `views.py` |
 
 Además, un estudiante solo ve y modifica **sus propios** registros (ver más abajo).
+
+Los mensajes de error llegan en el campo `mensaje` del [formato uniforme de errores](./errores.md), con `error` = `no_autenticado` (401) o `sin_permiso` (403).
 
 ### Enlace entre la cuenta y la whitelist
 
