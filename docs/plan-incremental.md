@@ -38,7 +38,8 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 7 | `recurso-evaluaciones` (PR #7, integrado) |
 | 8 | `feat/recurso-innovaciones` (PR #10, integrado) |
 | Ajuste | `sincroniza-intentos-nov15` (PR #12, integrado) |
-| 9 | `feat/autenticacion-permisos` |
+| 9 | `autenticacion-permisos` (PR #13, integrado) |
+| Ajuste | `errores-uniformes` (formato uniforme de errores) |
 | 10 | `config-mysql` |
 
 ## Etapa 0: estructura inicial ✅
@@ -466,7 +467,7 @@ Queda para la etapa de reglas en el servidor:
 
 ## Etapa 9: autenticación y permisos por rol ✅
 
-Rama: `feat/autenticacion-permisos`.
+Rama: `autenticacion-permisos` (PR #13).
 
 La API exige lo mismo que el frontend: sesión iniciada, correo activo en la whitelist y un rol permitido para cada acción. Un estudiante solo ve y modifica sus propios registros, y no ve la respuesta correcta de las preguntas.
 
@@ -481,6 +482,20 @@ La API exige lo mismo que el frontend: sesión iniciada, correo activo en la whi
 Decisión: el backend autentica con **cuentas de Django** (token y sesión) enlazadas a la whitelist por correo, para poder probarlo desde el admin y la API navegable. En la integración se agregará la verificación del token de Firebase, que usará los mismos permisos.
 
 Detalle, matriz de permisos, commits y cómo probarla: [autenticacion-y-permisos.md](./autenticacion-y-permisos.md).
+
+## Ajuste: respuestas de error uniformes ✅
+
+Rama: `errores-uniformes`.
+
+Todos los errores de la API responden con la misma forma, `{"error": "<código>", "mensaje": "<texto>", "campos": {...}}`, y los mensajes por defecto de DRF (técnicos, en inglés o en "usted") se reemplazan por mensajes claros en español que dicen qué valor se espera. Los mensajes propios del proyecto se conservan.
+
+| Pieza | Archivo |
+|---|---|
+| Manejador de errores (`EXCEPTION_HANDLER`) | `exceptions.py`, `settings.py` |
+| Un solo mensaje para un correo mal escrito | `serializers.py` |
+| 404 en JSON para rutas inexistentes; opciones válidas en los filtros | `views.py`, `urls.py` |
+
+Detalle, códigos, ejemplos, commits y cómo probarlo: [errores.md](./errores.md).
 
 ## Recursos previstos
 

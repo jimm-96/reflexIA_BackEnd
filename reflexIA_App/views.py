@@ -1,5 +1,5 @@
 from rest_framework import filters, viewsets
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -131,6 +131,23 @@ class UsuarioActualView(APIView):
         })
 
 
+class RutaNoEncontradaView(APIView):
+    """
+    Responde 404 en JSON a cualquier ruta de /api/ que no existe.
+
+    Sin esta vista, Django devolvería su página HTML de error, y el
+    frontend esperaría JSON. No exige sesión: una ruta inexistente responde
+    lo mismo a todos.
+    """
+
+    authentication_classes = []
+    permission_classes = []
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        raise NotFound(f'La ruta {request.path} no existe en la API.')
+
+
 # ─────────────────────────────────────────────
 # Recursos
 # ─────────────────────────────────────────────
@@ -256,15 +273,19 @@ class InnovacionViewSet(ViewSetConRoles):
         # ?categoria=<valor> deja solo los casos de esa categoría (HU-07).
         categoria = parametros.get('categoria')
         if categoria:
-            if categoria not in dict(Innovacion.CATEGORIA_CHOICES):
-                raise ValidationError({'categoria': f'"{categoria}" no es una categoría válida.'})
+            categorias = dict(Innovacion.CATEGORIA_CHOICES)
+            if categoria not in categorias:
+                opciones = ', '.join(categorias)
+                raise ValidationError({
+                    'categoria': [f'"{categoria}" no es una categoría válida. Usa una de estas: {opciones}.'],
+                })
             queryset = queryset.filter(categoria=categoria)
 
         # ?publicada=true|false separa los casos publicados de los borradores.
         publicada = parametros.get('publicada')
         if publicada:
             if publicada.lower() not in ('true', 'false'):
-                raise ValidationError({'publicada': 'Debe ser "true" o "false".'})
+                raise ValidationError({'publicada': ['Debe ser "true" o "false".']})
             queryset = queryset.filter(publicada=publicada.lower() == 'true')
 
         return queryset

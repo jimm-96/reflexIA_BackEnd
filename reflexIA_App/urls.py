@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 
@@ -19,4 +19,8 @@ urlpatterns = [
     path('auth/token/', obtain_auth_token, name='auth-token'),
     path('auth/yo/', views.UsuarioActualView.as_view(), name='auth-yo'),
     path('', include(router.urls)),
+    # Debe ir al final: cualquier otra ruta de /api/ responde 404 en JSON.
+    # Solo atrapa rutas terminadas en "/", así /api/talleres (sin "/")
+    # sigue redirigiendo a /api/talleres/ (APPEND_SLASH).
+    re_path(r'^.*/$', views.RutaNoEncontradaView.as_view(), name='ruta-no-encontrada'),
 ]

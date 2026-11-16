@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -26,7 +27,6 @@ class UsuarioAutorizadoSerializer(serializers.ModelSerializer):
                 lookup='iexact',
                 message='Este correo ya está autorizado.',
             ),
-            validar_correo_institucional,
         ]
     )
 
@@ -34,6 +34,16 @@ class UsuarioAutorizadoSerializer(serializers.ModelSerializer):
         model = UsuarioAutorizado
         fields = '__all__'
         read_only_fields = ('fecha_registro',)
+
+    def validate_correo(self, correo):
+        # El dominio se revisa aquí y no en `validators`: DRF llama a este
+        # método solo si el formato del correo ya es válido, así un correo mal
+        # escrito recibe un único mensaje y no dos.
+        try:
+            validar_correo_institucional(correo)
+        except DjangoValidationError as error:
+            raise serializers.ValidationError(error.messages)
+        return correo
 
 
 class TallerSerializer(serializers.ModelSerializer):

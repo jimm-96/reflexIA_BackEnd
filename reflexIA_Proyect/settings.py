@@ -144,6 +144,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'reflexIA_App.permissions.EstaEnWhitelist',
     ],
+    # Todos los errores responden con la misma forma:
+    # {"error": "<código>", "mensaje": "<texto>", "campos": {...}}
+    # (reflexIA_App/exceptions.py).
+    'EXCEPTION_HANDLER': 'reflexIA_App.exceptions.manejar_errores',
 }
 
 

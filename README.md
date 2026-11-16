@@ -33,10 +33,12 @@ reflexIA_BackEnd/
 │   ├── serializers.py    # Conversión de modelos a JSON
 │   ├── views.py          # ViewSets de la API, con los roles de cada uno
 │   ├── permissions.py    # Permisos: whitelist activa y rol
+│   ├── exceptions.py     # Formato uniforme de las respuestas de error
 │   ├── urls.py           # Router de DRF con los recursos y rutas de autenticación
 │   ├── admin.py          # Registro de modelos en el panel de administración
 │   ├── tests.py          # Pruebas automáticas de datos y validaciones
 │   ├── tests_permisos.py # Pruebas automáticas de autenticación y permisos
+│   ├── tests_errores.py  # Pruebas automáticas del formato de errores
 │   └── fixtures/         # Datos de ejemplo (casos de la biblioteca de innovaciones)
 ├── docs/                 # Documentación
 ├── manage.py
@@ -144,6 +146,28 @@ Quién puede hacer qué (**L** leer · **C** crear · **E** editar y eliminar):
 | Innovaciones | L (solo publicadas) | L C E | — |
 
 Explicación completa, decisiones y pendientes (como la verificación del token de Firebase en la integración): [docs/autenticacion-y-permisos.md](./docs/autenticacion-y-permisos.md).
+
+---
+
+## Formato de los errores
+
+Todas las respuestas de error de la API tienen la misma forma; el código HTTP (400, 401, 403, 404…) indica el tipo de error:
+
+```json
+{
+  "error": "validacion",
+  "mensaje": "Revisa los datos enviados: hay campos con errores.",
+  "campos": {
+    "nota": ["Debe ser un número entre 1.0 y 7.0, con un decimal como máximo."]
+  }
+}
+```
+
+* `error`: código corto (`validacion`, `json_invalido`, `no_autenticado`, `credenciales_invalidas`, `sin_permiso`, `no_encontrado`, `metodo_no_permitido`, `tipo_no_soportado`, `error_servidor`).
+* `mensaje`: texto general, listo para mostrar.
+* `campos`: errores de cada campo; vacío si el error no es de un campo.
+
+Cuando la sección de cada recurso dice que la API responde `400 Bad Request` con el motivo, el motivo llega en `campos` (o en `mensaje`, si no es de un campo). Códigos, ejemplos y decisiones: [docs/errores.md](./docs/errores.md).
 
 ---
 

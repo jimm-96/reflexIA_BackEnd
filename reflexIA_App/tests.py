@@ -648,7 +648,8 @@ class IntentoCuestionarioApiDec15Tests(IntentoCuestionarioDec15TestCase):
         response = self.client.post(self.endpoint, self.crear_payload(), format='json')
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn('non_field_errors', response.data)
+        self.assertEqual(response.data['error'], 'validacion')
+        self.assertEqual(response.data['mensaje'], 'Este estudiante ya tiene un intento con ese número.')
 
     def test_otro_estudiante_puede_usar_el_mismo_numero(self):
         self.crear_intento(4)
@@ -671,7 +672,7 @@ class IntentoCuestionarioApiDec15Tests(IntentoCuestionarioDec15TestCase):
                 )
 
                 self.assertEqual(response.status_code, 400)
-                self.assertIn(next(iter(invalido)), response.data)
+                self.assertIn(next(iter(invalido)), response.data['campos'])
 
 
 class IntentoCuestionarioAdminDec15Tests(TestCase):
