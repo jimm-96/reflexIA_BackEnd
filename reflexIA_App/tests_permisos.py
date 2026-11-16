@@ -107,7 +107,8 @@ class AutenticacionTests(PermisosTestCase):
         response = cliente.get('/api/talleres/')
 
         self.assertEqual(response.status_code, 403)
-        self.assertIn('no está autorizado', str(response.data['detail']))
+        self.assertEqual(response.data['error'], 'sin_permiso')
+        self.assertIn('no está autorizado', response.data['mensaje'])
 
     def test_acceso_revocado_responde_403(self):
         self.estudiante.estado = 'revoked'
