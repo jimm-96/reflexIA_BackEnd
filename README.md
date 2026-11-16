@@ -8,7 +8,7 @@ El proyecto completo tiene tres partes:
 2. **Backend** en Django: este repositorio.
 3. **Integración** entre ambos mediante la API: en iteraciones futuras.
 
-> **Estado:** etapa 8 de 8, innovaciones. Los ocho recursos de la API están completos; las etapas siguientes cambian la base de datos y preparan la integración. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** etapa 9, autenticación y permisos por rol. Los ocho recursos de la API están completos y protegidos: cada petición exige sesión, un correo activo en la whitelist y un rol permitido. Las etapas siguientes cambian la base de datos y preparan la integración. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
 
 ---
 
@@ -27,14 +27,16 @@ El proyecto completo tiene tres partes:
 reflexIA_BackEnd/
 ├── reflexIA_Proyect/     # Proyecto Django
 │   ├── settings.py       # Configuración (apps instaladas, idioma, base de datos)
-│   └── urls.py           # Rutas raíz: /admin/ y /api/
+│   └── urls.py           # Rutas raíz: /admin/, /api/ y /api-auth/
 ├── reflexIA_App/         # Aplicación principal
 │   ├── models.py         # Modelos (tablas)
 │   ├── serializers.py    # Conversión de modelos a JSON
-│   ├── views.py          # ViewSets de la API
-│   ├── urls.py           # Router de DRF con los recursos
+│   ├── views.py          # ViewSets de la API, con los roles de cada uno
+│   ├── permissions.py    # Permisos: whitelist activa y rol
+│   ├── urls.py           # Router de DRF con los recursos y rutas de autenticación
 │   ├── admin.py          # Registro de modelos en el panel de administración
-│   ├── tests.py          # Pruebas automáticas
+│   ├── tests.py          # Pruebas automáticas de datos y validaciones
+│   ├── tests_permisos.py # Pruebas automáticas de autenticación y permisos
 │   └── fixtures/         # Datos de ejemplo (casos de la biblioteca de innovaciones)
 ├── docs/                 # Documentación
 ├── manage.py
@@ -101,11 +103,53 @@ Carga los 5 casos ilustrativos del frontend con sus pasos. Usa los ids 1 a 5 de 
 python manage.py test
 ```
 
+### 9. Crear cuentas para probar cada rol
+La API exige iniciar sesión. Para probarla con un rol de ReflexIA:
+
+1. En `/admin/` → **Usuarios autorizados**: autorizar el correo con su rol (por ejemplo, `profesor@ucen.cl` como Profesor guía).
+2. En `/admin/` → **Usuarios** (de Django): crear una cuenta cuyo **nombre de usuario** sea ese mismo correo, con una contraseña.
+3. En la API navegable, usar **Log in** (arriba a la derecha) con esa cuenta.
+
+El superusuario del paso 5 puede hacer todo, sin rol de ReflexIA. Detalle en [docs/autenticacion-y-permisos.md](./docs/autenticacion-y-permisos.md).
+
+---
+
+## Autenticación y permisos
+
+Todas las rutas de `/api/` exigen, en este orden:
+
+1. **Sesión iniciada:** un token (`Authorization: Token <token>`) o la sesión de Django. Sin ella, la API responde `401`.
+2. **Correo activo en la whitelist** (`/api/usuarios/`). Si no está o fue revocado, responde `403`.
+3. **Rol permitido** para esa acción. Si no, responde `403`.
+
+Un estudiante solo ve y modifica sus propios registros, y no ve qué alternativa de una pregunta es la correcta.
+
+| Método | Ruta | Qué hace |
+| :--- | :--- | :--- |
+| POST | `/api/auth/token/` | Recibe `username` y `password` y devuelve `{"token": "..."}`. No requiere sesión. |
+| GET | `/api/auth/yo/` | Devuelve `correo`, `nombre`, `rol` y `es_superusuario` de quien hace la petición. |
+| — | `/api-auth/login/` | Login de sesión para la API navegable. |
+
+Quién puede hacer qué (**L** leer · **C** crear · **E** editar y eliminar):
+
+| Recurso | Estudiante | Profesor guía | Administrador |
+|---|---|---|---|
+| Usuarios autorizados | — | — | L C E |
+| Talleres | L | L C E | — |
+| Preguntas teóricas | L (sin la respuesta correcta) | L C E | — |
+| Intentos de cuestionario | L C (los suyos) | L | — |
+| Reflexiones | L C E (las suyas) | L | — |
+| Retroalimentaciones | L (las de sus reflexiones) | L C E | — |
+| Evaluaciones | L (las suyas) | L C E | — |
+| Innovaciones | L (solo publicadas) | L C E | — |
+
+Explicación completa, decisiones y pendientes (como la verificación del token de Firebase en la integración): [docs/autenticacion-y-permisos.md](./docs/autenticacion-y-permisos.md).
+
 ---
 
 ## Endpoints
 
-Esta sección se completa en cada etapa.
+Esta sección se completa en cada etapa. Los permisos de cada recurso están en la tabla de [Autenticación y permisos](#autenticación-y-permisos).
 
 ### 1. Recurso: Usuarios autorizados (`/api/usuarios/`)
 
@@ -208,7 +252,7 @@ Cada vez que un estudiante rinde el cuestionario del marco teórico, con su resu
 * **Valores permitidos:** `estado` = `completed` (Completado) o `timed-out` (Tiempo agotado), los mismos del frontend.
 * **Opcionales:** `aprobado` (por defecto `false`) y `estado` (por defecto `completed`).
 * **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `numero_intento` va de 1 a 9 y no se repite para un mismo estudiante; `respuestas_correctas` va de 0 a 10; `nota` va de 1.0 a 7.0, con un decimal. Si no se cumple, la API responde `400 Bad Request` con el motivo.
-* **Pendiente (etapa 11):** por ahora la nota y `aprobado` los envía quien registra el intento. El cálculo en el servidor y el rechazo de intentos después de aprobar o de usar los 9 se agregan en la etapa 11.
+* **Pendiente (etapa 12):** por ahora la nota y `aprobado` los envía quien registra el intento. El cálculo en el servidor y el rechazo de intentos después de aprobar o de usar los 9 se agregan en la etapa 12.
 
 ### 5. Recurso: Reflexiones (`/api/reflexiones/`)
 
@@ -287,7 +331,7 @@ Nota y resultado oficial de un estudiante en un taller (HU-02, panel docente).
   ```
 * **Respuesta:** incluye `correo_estudiante`, `numero_taller` y `fecha`; son de solo lectura.
 * **Valores permitidos:** `resultado` = `approved` (aprobado) o `failed` (reprobado).
-* **Validaciones:** el estudiante debe tener rol `student`; la nota va de 1.0 a 7.0, con un decimal; existe una sola evaluación por estudiante y taller. La regla que deriva el resultado a partir de la nota se incorporará en la etapa 11.
+* **Validaciones:** el estudiante debe tener rol `student`; la nota va de 1.0 a 7.0, con un decimal; existe una sola evaluación por estudiante y taller. La regla que deriva el resultado a partir de la nota se incorporará en la etapa 12.
 
 ### 8. Recurso: Innovaciones (`/api/innovaciones/`)
 

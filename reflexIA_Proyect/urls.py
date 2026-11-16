@@ -20,4 +20,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('reflexIA_App.urls')),
+    # Botón "Log in" de la API navegable de DRF (sesión de Django).
+    path('api-auth/', include('rest_framework.urls')),
 ]

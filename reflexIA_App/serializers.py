@@ -58,6 +58,30 @@ class PreguntaTeoricaSerializer(serializers.ModelSerializer):
         fields = ('id', 'enunciado', 'activa', 'alternativas')
 
 
+class AlternativaEstudianteSerializer(serializers.ModelSerializer):
+    """Alternativa sin `es_correcta`: el estudiante no debe ver la respuesta."""
+
+    class Meta:
+        model = Alternativa
+        fields = ('id', 'texto')
+
+
+class PreguntaTeoricaEstudianteSerializer(serializers.ModelSerializer):
+    """
+    Pregunta tal como la ve un estudiante que rinde el cuestionario.
+
+    Igual que `PreguntaTeoricaSerializer`, pero sus alternativas no dicen
+    cuál es la correcta. El frontend aplica la misma regla a la estructura
+    de los talleres (`answerKeyPrivate`, src/models/workshopStructure.ts).
+    """
+
+    alternativas = AlternativaEstudianteSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PreguntaTeorica
+        fields = ('id', 'enunciado', 'alternativas')
+
+
 class IntentoCuestionarioSerializer(serializers.ModelSerializer):
     # El estudiante se recibe por su id; el correo se agrega en la
     # respuesta para que se lea quién rindió sin buscar el id.
