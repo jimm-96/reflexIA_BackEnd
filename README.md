@@ -6,9 +6,9 @@ El proyecto completo tiene tres partes:
 
 1. **Frontend** en React + TypeScript: listo, en el repo [`reflexIA`](https://github.com/gvbr-iel/reflexIA).
 2. **Backend** en Django: este repositorio.
-3. **Integración** entre ambos mediante la API: en iteraciones futuras.
+3. **Integración** entre ambos mediante la API: en curso para la EVA3. Ver [docs/integracion-y-despliegue.md](./docs/integracion-y-despliegue.md).
 
-> **Estado:** etapa 9, autenticación y permisos por rol. Los ocho recursos de la API están completos y protegidos: cada petición exige sesión, un correo activo en la whitelist y un rol permitido. Las etapas siguientes cambian la base de datos y preparan la integración. Ver [docs/plan-incremental.md](./docs/plan-incremental.md).
+> **Estado:** construcción de la EVA2 terminada (etapas 0 a 9 y formato uniforme de errores; ver [docs/plan-incremental.md](./docs/plan-incremental.md)). Los ocho recursos de la API están completos y protegidos: cada petición exige sesión, un correo activo en la whitelist y un rol permitido. **En curso (EVA3):** conexión con el frontend sin Firebase, MySQL, pruebas, despliegue y carga, según [docs/integracion-y-despliegue.md](./docs/integracion-y-despliegue.md).
 
 ---
 
@@ -17,7 +17,8 @@ El proyecto completo tiene tres partes:
 * **Python:** 3.13
 * **Django:** 6.1
 * **Django REST Framework:** 3.18
-* **Base de datos:** SQLite en desarrollo; MySQL en una etapa posterior.
+* **Despliegue:** **Render** (plan gratuito) para este backend; el frontend va en **Vercel**. Pasos en [docs/integracion-y-despliegue.md](./docs/integracion-y-despliegue.md) (B-6 y F-9).
+* **Base de datos:** **MySQL** (8.4 en local y TiDB Cloud Starter, compatible con MySQL, en producción). Mientras no se integren las tareas B-1 y B-2, el código sigue usando SQLite.
 
 ---
 
@@ -78,6 +79,8 @@ pip install -r requirements.txt
 ```bash
 python manage.py migrate
 ```
+
+> Mientras no se integre la tarea B-2, `migrate` crea una base SQLite (`db.sqlite3`). Después, hay que crear antes la base MySQL y configurar el `.env` ([B-2](./docs/integracion-y-despliegue.md#b-2-mysql-local-y-tidb-producción)).
 
 ### 5. Crear un superusuario para el panel de administración
 ```bash
@@ -145,7 +148,7 @@ Quién puede hacer qué (**L** leer · **C** crear · **E** editar y eliminar):
 | Evaluaciones | L (las suyas) | L C E | — |
 | Innovaciones | L (solo publicadas) | L C E | — |
 
-Explicación completa, decisiones y pendientes (como la verificación del token de Firebase en la integración): [docs/autenticacion-y-permisos.md](./docs/autenticacion-y-permisos.md).
+Explicación completa, decisiones y pendientes (como la creación de cuentas y el cierre de sesión, tarea B-4 de la integración): [docs/autenticacion-y-permisos.md](./docs/autenticacion-y-permisos.md).
 
 ---
 
@@ -276,7 +279,7 @@ Cada vez que un estudiante rinde el cuestionario del marco teórico, con su resu
 * **Valores permitidos:** `estado` = `completed` (Completado) o `timed-out` (Tiempo agotado), los mismos del frontend.
 * **Opcionales:** `aprobado` (por defecto `false`) y `estado` (por defecto `completed`).
 * **Validaciones:** `estudiante` es el id de un usuario autorizado con rol `student`; `numero_intento` va de 1 a 9 y no se repite para un mismo estudiante; `respuestas_correctas` va de 0 a 10; `nota` va de 1.0 a 7.0, con un decimal. Si no se cumple, la API responde `400 Bad Request` con el motivo.
-* **Pendiente (etapa 12):** por ahora la nota y `aprobado` los envía quien registra el intento. El cálculo en el servidor y el rechazo de intentos después de aprobar o de usar los 9 se agregan en la etapa 12.
+* **Pendiente (tarea B-Q1):** por ahora la nota y `aprobado` los envía quien registra el intento. El cálculo en el servidor y el rechazo de intentos después de aprobar o de usar los 9 se agregan con el endpoint `rendir`.
 
 ### 5. Recurso: Reflexiones (`/api/reflexiones/`)
 
@@ -355,7 +358,7 @@ Nota y resultado oficial de un estudiante en un taller (HU-02, panel docente).
   ```
 * **Respuesta:** incluye `correo_estudiante`, `numero_taller` y `fecha`; son de solo lectura.
 * **Valores permitidos:** `resultado` = `approved` (aprobado) o `failed` (reprobado).
-* **Validaciones:** el estudiante debe tener rol `student`; la nota va de 1.0 a 7.0, con un decimal; existe una sola evaluación por estudiante y taller. La regla que deriva el resultado a partir de la nota se incorporará en la etapa 12.
+* **Validaciones:** el estudiante debe tener rol `student`; la nota va de 1.0 a 7.0, con un decimal; existe una sola evaluación por estudiante y taller. La regla que deriva el resultado a partir de la nota se incorporará en la tarea B-8.
 
 ### 8. Recurso: Innovaciones (`/api/innovaciones/`)
 
