@@ -11,10 +11,9 @@ Replica en el servidor las mismas reglas que aplica el frontend
    la vista permite para esa acción (RN-02, matriz de permisos del documento
    03-actores-y-permisos del frontend).
 
-Hoy el usuario inicia sesión con una cuenta de Django (token o sesión) cuyo
-correo coincide con la whitelist. En la integración se agregará la
-verificación del token de Firebase, y estas mismas clases seguirán decidiendo
-los permisos.
+El usuario inicia sesión con una cuenta de Django (token o sesión) cuyo
+correo coincide con la whitelist. El frontend usa este mismo login
+(POST /api/auth/token/); el proyecto no usa Firebase.
 """
 
 from rest_framework.permissions import BasePermission

@@ -56,7 +56,7 @@ Decisiones de la matriz:
 - **El administrador solo gestiona la whitelist**, como en el frontend (`/admin/whitelist`). Si además debe ver talleres o notas, se le agrega el rol en el ViewSet correspondiente.
 - **Un intento de cuestionario no se modifica ni se elimina** una vez registrado: es el respaldo de la nota. Solo un superusuario puede corregirlo.
 - **El profesor guía no escribe reflexiones**: las lee para revisarlas. La retroalimentación y la nota las registra en sus propios recursos.
-- **Solo el profesor guía escribe notas oficiales** (`/api/evaluaciones/`), igual que en las reglas de Firestore del frontend.
+- **Solo el profesor guía escribe notas oficiales** (`/api/evaluaciones/`), igual que en el frontend.
 
 ## Registros propios del estudiante
 
@@ -74,7 +74,7 @@ Un estudiante que lista `/api/preguntas/` recibe las alternativas **sin** el cam
 | Método | Ruta | Qué hace | Requiere sesión |
 | :--- | :--- | :--- | :--- |
 | POST | `/api/auth/token/` | Recibe `username` y `password` y devuelve un token. | No |
-| GET | `/api/auth/yo/` | Devuelve correo, nombre y rol de quien hace la petición. Equivale a `verifyUserAccess` del frontend. | Sí |
+| GET | `/api/auth/yo/` | Devuelve correo, nombre y rol de quien hace la petición. Equivale a `restoreSession` del frontend (`authService.ts`). | Sí |
 | — | `/api-auth/login/` | Login de sesión para la API navegable de DRF (botón "Log in"). | No |
 
 Ejemplo:
@@ -105,7 +105,7 @@ curl http://127.0.0.1:8000/api/auth/yo/ \
    - `/api/usuarios/` responde `403`.
 6. Entrar como el profesor y comprobar que sí puede crear un taller.
 7. En `/admin/` → **Usuarios autorizados**, revocar al estudiante y comprobar que su sesión ya no puede leer `/api/talleres/` (`403`).
-8. `python manage.py test`: deben pasar las 61 pruebas (30 de ellas en `tests_permisos.py`).
+8. `python manage.py test`: al cerrar esta etapa pasaban las 61 pruebas (30 de ellas en `tests_permisos.py`).
 
 ## Archivos y commits
 
@@ -124,7 +124,10 @@ Cada commit deja las pruebas en verde. El commit 1 va primero porque, desde el c
 
 ## Pendiente
 
-- **Firebase (etapa de integración):** el frontend inicia sesión con Firebase Authentication. Se agregará una clase de autenticación que verifique el ID token de Firebase (`Authorization: Bearer <token>`) con `firebase-admin` y tome el correo del token. Los permisos de esta etapa no cambian: siguen leyendo la whitelist por correo.
-- **CORS:** el frontend en `localhost:5173` necesitará `django-cors-headers` para llamar a la API.
-- **Permisos por campo (etapa de reglas):** hoy el estudiante puede editar cualquier campo de su reflexión, incluido `estado`. Que solo pueda pasarla de `draft` a `submitted`, y que el profesor la marque como revisada, son reglas de negocio de esa etapa.
+El proyecto dejó Firebase (27-11-2026): el frontend inicia sesión con este mismo login de Django. Lo pendiente está en [integracion-y-despliegue.md](./integracion-y-despliegue.md):
+
+- **Cuentas y sesiones (tarea B-4):** crear la cuenta de Django al autorizar un correo, cerrar sesión en el servidor, vencimiento del token, límite de intentos de contraseña e `id` en `/api/auth/yo/`.
+- **CORS (tarea B-3):** el frontend en `localhost:5173` necesita `django-cors-headers` para llamar a la API.
+- **Lectura de estudiantes para el profesor guía (tarea B-8):** hoy `/api/usuarios/` es solo del administrador.
+- **Permisos por campo (tarea B-I2):** hoy el estudiante puede editar cualquier campo de su reflexión, incluido `estado`. Que solo pueda pasarla de `draft` a `submitted`, y que el profesor la marque como revisada, son reglas de negocio de esa tarea, junto con que `intentos_usados` sea de solo lectura y que el estudiante no pueda eliminar su reflexión.
 - **Auditoría (RN-04, GAP-08):** no se registra quién hizo cada cambio.
