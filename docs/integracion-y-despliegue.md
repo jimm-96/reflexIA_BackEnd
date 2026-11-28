@@ -126,6 +126,28 @@ Backlog de toda la etapa. Cada fila es una tarea con su ID, el mismo que usa el 
 - Si una tarea queda bloqueada, se marca ⛔ y se explica en "Notas" para que el equipo la vea.
 - Las decisiones (D-1 a D-6) se marcan ✅ cuando el equipo las acuerda, anotando la decisión en "Notas".
 
+### Cómo repartir y trabajar las tareas pendientes
+
+**Ramas**
+- **Backend:** cada tarea B sale de `main` y vuelve a `main` con su PR.
+- **Frontend:** la base de la integración es la rama `feature/cambios-validacion` del frontend (PR `reflexIA#38`, en borrador). Ya tiene el login con la API y el cliente `apiClient.ts`. Cada tarea F sale de esa rama y vuelve a ella con su PR.
+- Esa rama **no se mezcla a `main`** mientras queden pantallas en Firestore: sus reglas exigían la sesión de Firebase, que ya no existe. Se mezcla cuando estén F-3 a F-8 y las tareas B de las que dependen.
+
+**Orden sugerido**
+
+| Paso | Backend | Frontend | Por qué |
+|---|---|---|---|
+| 1 | B-3 (CORS) y B-4 (`id` en `/auth/yo/` y cuenta al autorizar un correo) | F-1 (quitar el proxy y el valor por defecto de la URL) y F-3 (whitelist con "Eliminar definitivamente") | F-3 solo necesita `/api/usuarios/`, que ya existe; B-4 hace que los correos autorizados desde la app puedan entrar. |
+| 2 | B-Q1 (`rendir`) y B-I2 (impulsos e intentos) | F-5 (cuestionario) y F-6 (talleres del estudiante) | Hoy los intentos y borradores viven en el navegador. |
+| 3 | B-8 (estudiantes para el profesor guía) y B-9 (estructura de talleres, envíos e innovaciones) | F-4, F-7 y F-8 (estructura de talleres, revisión docente, panel e innovaciones) | **El panel docente necesita el paso 2:** solo puede mostrar el avance que ya está en la API. |
+| 4 | — | Quitar Firebase del frontend y mezclar PR `reflexIA#38` | `main` vuelve a funcionar completo, ahora con la API. |
+
+**Decisiones que conviene tomar al repartir**
+- **Commits por integrante:** la pauta exige 6 commits propios por persona en esta unidad. Repartan las tareas para que cada uno los alcance.
+- **Formato de las innovaciones:** el modelo `Innovacion` sigue un formato antiguo del frontend (categoría, desafío, actuación…). El frontend actual publica taller, nota, tipo de producto, trabajo y etiquetas. Propuesta: adaptar el backend al formato actual (B-9).
+- **Contraseña de los usuarios nuevos:** hasta tener la activación por correo (CAM-05), la cuenta se crea sin contraseña y el administrador la define en `/admin/` de Django. Propuesta: mantenerlo así y no pedir contraseñas en la app.
+- **Datos guardados en el navegador:** los intentos y borradores actuales no se migran a la API; son datos de prueba.
+
 ### Decisiones (sección 1)
 
 | ID | Tarea | Responsable | Depende de | Estado | Rama / PR | Notas |
