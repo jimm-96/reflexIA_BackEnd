@@ -159,7 +159,7 @@ class IntentoCuestionario(models.Model):
     Equivale a `QuizAttempt` del frontend (src/models/theoryQuiz.ts).
     Guarda el resultado, el número de intento y si se agotó el tiempo.
     Las reglas que calculan la nota y rechazan intentos (DEC-15) se aplican
-    en una etapa posterior.
+    en la tarea B-Q1 de la integración (docs/integracion-y-despliegue.md).
     """
 
     # Cada intento tiene 10 preguntas sacadas del banco (RF-04).

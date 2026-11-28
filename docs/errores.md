@@ -112,4 +112,4 @@ Cada commit deja las pruebas en verde. El commit 4 incluye `tests.py` y `tests_p
 
 ## Pendiente
 
-- **Integración:** el frontend deberá leer `error`, `mensaje` y `campos` al llamar a la API, por ejemplo mostrando cada mensaje de `campos` junto a su campo del formulario.
+- **Integración:** el cliente del frontend (`apiClient.ts`, tarea F-1 de [integracion-y-despliegue.md](./integracion-y-despliegue.md)) ya convierte `error`, `mensaje` y `campos` en un `ApiError`. Falta que cada formulario muestre los mensajes de `campos` junto a su campo.
