@@ -10,6 +10,8 @@ El backend se construye por etapas. Cada etapa agrega **un recurso** de ReflexIA
 
 Al terminar cada etapa, `python manage.py check` no debe mostrar errores.
 
+Este plan cubre la construcción del backend para la **EVA2** (etapas 0 a 9 y sus ajustes). El trabajo de la **EVA3** (conectar con el frontend, MySQL, pruebas, despliegue y carga) sigue en [integracion-y-despliegue.md](./integracion-y-despliegue.md), con las tareas B-1 a B-9; la sección [Unidad IV](#unidad-iv-eva3-integración-pruebas-y-despliegue-) muestra cómo continúan las etapas.
+
 Estados: ✅ hecha · ⏳ pendiente.
 
 ## Flujo de ramas
@@ -33,14 +35,15 @@ Luego se abre el Pull Request hacia `main` en GitHub y se integra con **Merge pu
 | 2 | `recurso-talleres` (PR #2, integrado) |
 | 3 | `recurso-preguntas` (PR #3, integrado) |
 | 4 | `recurso-intentos-cuestionario` (PR #4, integrado) |
-| 5 | `recurso-reflexiones` |
+| 5 | `recurso-reflexiones` (PR #5, integrado) |
 | 6 | `recurso-retroalimentaciones` (PR #6, integrado) |
 | 7 | `recurso-evaluaciones` (PR #7, integrado) |
 | 8 | `feat/recurso-innovaciones` (PR #10, integrado) |
 | Ajuste | `sincroniza-intentos-nov15` (PR #12, integrado) |
 | 9 | `autenticacion-permisos` (PR #13, integrado) |
-| Ajuste | `errores-uniformes` (formato uniforme de errores) |
-| 10 | `config-mysql` |
+| Docs y pruebas | `docs/etapas-6-7-integradas` (PR #8), `test/pruebas-etapas-6-7` (PR #9) y `docs/etapa-8-integrada` (PR #11), integrados |
+| Ajuste | `errores-uniformes` (PR #14, integrado) |
+| EVA3 | Una rama por tarea: ver [integracion-y-despliegue.md](./integracion-y-despliegue.md#5-backend-preparar-para-producción-e-integrar) |
 
 ## Etapa 0: estructura inicial ✅
 
@@ -161,9 +164,10 @@ Decisiones:
 
 Pendientes para el ajuste final:
 
-- La API muestra `es_correcta`. Cuando haya autenticación (etapa 10), el estudiante no debería ver cuál es la respuesta correcta.
-- Las alternativas no se pueden crear ni editar por la API. Si el frontend necesita cargar preguntas, el serializer tendrá que aceptar alternativas anidadas.
-- No se valida que cada pregunta tenga exactamente una alternativa correcta (etapa 12).
+- ~~La API muestra `es_correcta`.~~ **Resuelto en la etapa 9:** el estudiante recibe las alternativas sin `es_correcta`.
+- Las alternativas no se pueden crear ni editar por la API. El banco se cargará con un fixture (tarea B-5); si el frontend necesita editarlo, el serializer tendrá que aceptar alternativas anidadas.
+- Falta el campo de explicación de cada pregunta, que el frontend muestra al terminar (tarea B-Q1).
+- No se valida que cada pregunta tenga exactamente una alternativa correcta (tarea B-Q1).
 
 | # | Archivos | Mensaje sugerido |
 |---|---|---|
@@ -206,8 +210,8 @@ Decisiones:
 
 Pendientes para el ajuste final:
 
-- La nota y `aprobado` los envía quien registra el intento. Las reglas (aprobar con 8 de 10, máximo 9 intentos en bloques con nota máxima 7.0, 5.0 y 4.0, DEC-15) se aplican en la etapa 12.
-- No hay filtro por estudiante (`?estudiante=<id>`): la lista trae los intentos de todos.
+- La nota y `aprobado` los envía quien registra el intento. Las reglas (aprobar con 8 de 10, máximo 9 intentos en bloques con nota máxima 7.0, 5.0 y 4.0, DEC-15) se aplican en la tarea B-Q1 de la integración.
+- No hay filtro por estudiante (`?estudiante=<id>`). Desde la etapa 9, el estudiante solo recibe los suyos; el profesor guía recibe los de todos.
 
 | # | Archivos | Mensaje sugerido |
 |---|---|---|
@@ -252,8 +256,8 @@ Decisiones:
 
 Pendientes para el ajuste final:
 
-- `intentos_usados` y `estado` los envía el cliente. Las reglas (no superar los `intentos_maximos` de cada taller, que pueden ser 1 o 2; cambios de estado en orden; mínimo de 50 caracteres por texto para enviar; cierre al vencer `fecha_limite`) se aplican en la etapa 12.
-- Solo se guarda el contenido más reciente. El frontend guarda el texto de cada intento (`WorkshopAttempt.content`) y las respuestas a pasos configurados por el docente (`answers`, C-05); falta decidir si van en un modelo aparte.
+- `intentos_usados` y `estado` los envía el cliente. Las reglas (no superar los `intentos_maximos` de cada taller, que pueden ser 1 o 2; cambios de estado en orden; mínimo de 50 caracteres por texto para enviar; cierre al vencer `fecha_limite`) se aplican en la tarea B-I2 de la integración, salvo el cierre por plazo, que sigue pendiente (GAP-05).
+- Solo se guarda el contenido más reciente. El frontend guarda el texto de cada intento (`WorkshopAttempt.content`) y las respuestas a pasos configurados por el docente (`answers`, C-05); falta decidir si van en un modelo aparte. Con la validación de la profesora, cada taller tiene sus propios pasos (CAM-14): ver la sección 1.7 de la guía de integración.
 - No hay filtros por estudiante ni por taller (`?estudiante=<id>`, `?taller=<id>`).
 
 | # | Archivos | Mensaje sugerido |
@@ -326,7 +330,7 @@ Decisiones:
 - Se guarda una sola evaluación por estudiante y taller (`UniqueConstraint`): al modificar la nota se actualiza la evaluación del taller sin duplicarla.
 - El estudiante y el taller se envían por id; la respuesta agrega `correo_estudiante` y `numero_taller` (solo lectura).
 - Los valores de `resultado` coinciden con el frontend; las etiquetas se muestran en español.
-- La regla de negocio que determina `approved` desde una nota de 4.0 o superior se aplicará en la etapa 12.
+- La regla de negocio que determina `approved` desde una nota de 4.0 o superior se aplicará en la tarea B-8 de la integración.
 
 | # | Archivos | Mensaje sugerido |
 |---|---|---|
@@ -386,8 +390,8 @@ Decisiones:
 
 Pendientes para el ajuste final:
 
-- Cuando haya autenticación (etapa 10), el estudiante debería ver solo las innovaciones publicadas, y solo profesores y administradores deberían crearlas o editarlas.
-- En SQLite, `?search=` distingue tildes, y las mayúsculas solo se ignoran en letras sin tilde ("evaluacion" no encuentra "evaluación"). El frontend ignora ambas. Con MySQL (etapa 9) y una intercalación `_ai_ci`, la búsqueda ignora tildes y mayúsculas.
+- ~~Permisos de la biblioteca.~~ **Resuelto en la etapa 9:** el estudiante ve solo las innovaciones publicadas, y solo el profesor guía las crea o edita.
+- En SQLite, `?search=` distingue tildes, y las mayúsculas solo se ignoran en letras sin tilde ("evaluacion" no encuentra "evaluación"). El frontend ignora ambas. Con MySQL (tarea B-2) y una intercalación `_ai_ci`, la búsqueda ignora tildes y mayúsculas.
 - `?search=` no busca en la categoría, porque se guarda como clave (`formative`); la categoría se filtra con `?categoria=`.
 - Los pasos no se pueden crear ni editar por la API.
 
@@ -456,7 +460,7 @@ Cómo probarlo:
 3. En `/api/intentos-cuestionario/`: crear un intento con `"numero_intento": 7` y `"estado": "timed-out"` y comprobar que la respuesta trae `"nota_maxima": 4.0`. Comprobar que se rechazan los números 0 y 10 y el estado `in-progress`.
 4. `python manage.py test`: deben pasar las 31 pruebas.
 
-Queda para la etapa de reglas en el servidor:
+Queda para la tarea B-Q1 de la integración:
 
 - Calcular la nota (hoy la envía quien registra el intento): nota por aciertos con exigencia del 60 % (6 de 10 = 4,0) y limitada por `nota_maxima`. Es la propuesta que usa el frontend (`src/utils/theoryQuizGrading.ts`), pero sigue **pendiente de confirmar** (PEND-01, duda D-03).
 - Calcular `aprobado` (8 de 10) y asignar `numero_intento` automáticamente según el historial.
@@ -479,13 +483,13 @@ La API exige lo mismo que el frontend: sesión iniciada, correo activo en la whi
 | Preguntas sin `es_correcta` para estudiantes | `serializers.py` |
 | Quién soy (`/api/auth/yo/`) | `views.py`, `urls.py` |
 
-Decisión: el backend autentica con **cuentas de Django** (token y sesión) enlazadas a la whitelist por correo, para poder probarlo desde el admin y la API navegable. En la integración se agregará la verificación del token de Firebase, que usará los mismos permisos.
+Decisión: el backend autentica con **cuentas de Django** (token y sesión) enlazadas a la whitelist por correo, para poder probarlo desde el admin y la API navegable. Desde la EVA3, el frontend usa este mismo login, sin Firebase. Lo que falta para producción (cuenta junto con la whitelist, cierre de sesión, vencimiento y límite de intentos) es la tarea B-4 de la integración.
 
 Detalle, matriz de permisos, commits y cómo probarla: [autenticacion-y-permisos.md](./autenticacion-y-permisos.md).
 
 ## Ajuste: respuestas de error uniformes ✅
 
-Rama: `errores-uniformes`.
+Rama: `errores-uniformes` (PR #14).
 
 Todos los errores de la API responden con la misma forma, `{"error": "<código>", "mensaje": "<texto>", "campos": {...}}`, y los mensajes por defecto de DRF (técnicos, en inglés o en "usted") se reemplazan por mensajes claros en español que dicen qué valor se espera. Los mensajes propios del proyecto se conservan.
 
@@ -514,10 +518,16 @@ Cada recurso sale de un modelo del frontend (`reflexIA/src/models/`). Los nombre
 
 El orden importa: los modelos con llaves foráneas (FK) van después de los modelos a los que apuntan.
 
-## Etapas posteriores ⏳
+## Unidad IV (EVA3): integración, pruebas y despliegue ⏳
 
-| Etapa | Contenido |
-|---|---|
-| 10 | Cambio de SQLite a **MySQL** (`mysqlclient`, credenciales en `.env`). |
-| 11 | Preparación para integrar con el frontend React: CORS (`django-cors-headers`) y verificación del token de Firebase, que reutiliza los permisos de la etapa 9. |
-| 12 | Reglas de negocio en el servidor: nota y aprobación (8/10) del cuestionario calculadas por el servidor, rechazo de intentos si ya aprobó o usó los 9 (DEC-15), nota 7,0 para avanzar, cierre automático del taller al vencer su plazo (DEC-13, GAP-05), y permisos por campo (por ejemplo, que el estudiante solo pueda enviar su reflexión y el profesor marcarla como revisada). (El dominio `@ucen.cl` se valida desde la etapa 1; el rango de 1 a 3 intentos por taller, desde la etapa 2; el de 1 a 9 intentos del cuestionario con su nota máxima por bloque, desde el ajuste DEC-15, y los roles, desde la etapa 9.) |
+Las etapas 10 a 12 que tenía este plan se reorganizaron como tareas en [integracion-y-despliegue.md](./integracion-y-despliegue.md), alineadas con la pauta de la EVA3. Se mantiene el mismo flujo: una rama por tarea, commits pequeños y un PR revisado.
+
+| Antes | Ahora | Tareas |
+|---|---|---|
+| 10. Cambio de SQLite a MySQL | Configuración por variables de entorno y **MySQL 8.4** en local; TiDB Cloud Starter (compatible con MySQL) en producción. | B-1, B-2 |
+| 11. Preparar la integración (CORS y token de Firebase) | CORS, archivos estáticos y ruta de salud. **Sin Firebase:** el frontend usa el login de Django, y se completan las cuentas y sesiones. | B-3, B-4 |
+| 12. Reglas de negocio en el servidor | Nota del cuestionario calculada por el servidor, impulsos con límite de intentos, estudiantes para el profesor guía y modelos que faltan. | B-Q1, B-I2, B-8, B-9 |
+| — | Datos iniciales y despliegue del backend en **Render** (el frontend se despliega en **Vercel**, tarea F-9). | B-5, B-6, B-7 |
+| — | Pruebas documentadas y pruebas de carga. | P-6, C-1 a C-5 |
+
+Sigue pendiente, sin tarea asignada: el cierre automático de los talleres al vencer el plazo (DEC-13, GAP-05).
